@@ -1,0 +1,70 @@
+#include "process.hpp"
+
+#include <psapi.h>
+
+#include "core/snapshot.hpp"
+
+namespace wincpp
+{
+
+    std::unique_ptr< process_t > process_t::open( std::string_view name, std::uint32_t access )
+    {
+        for ( const auto& proc : core::snapshot< core::snapshot_kind::process_t >::create() )
+        {
+            if ( proc.name == name )
+            {
+                const auto handle = OpenProcess( access, FALSE, proc.id );
+
+                if ( !handle )
+                    throw core::error::from_win32( GetLastError() );
+
+                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc.id, proc.name, memory_type::remote_t ) );
+            }
+        }
+
+        return nullptr;
+    }
+
+    std::unique_ptr< process_t > process_t::open( std::uint32_t id, std::uint32_t access )
+    {
+        for ( const auto& proc : core::snapshot< core::snapshot_kind::process_t >::create() )
+        {
+            if ( proc.id == id )
+            {
+                const auto handle = OpenProcess( access, FALSE, id );
+
+                if ( !handle )
+                    throw core::error::from_win32( GetLastError() );
+
+                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc.id, proc.name, memory_type::remote_t ) );
+            }
+        }
+
+        return nullptr;
+    }
+
+    std::unique_ptr< process_t > process_t::current() noexcept
+    {
+        return std::unique_ptr< process_t >( new process_t( core::handle_t::create( GetCurrentProcess(), false ), memory_type::local_t ) );
+    }
+
+    process_t::process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type )
+        : handle( handle ),
+          id( id ),
+          name( name ),
+          module_factory( this )
+    {
+    }
+
+    process_t::process_t( std::shared_ptr< core::handle_t > handle, memory_type type ) : handle( handle ), module_factory( this )
+    {
+        name.resize( MAX_PATH );
+
+        if ( !GetModuleBaseName( handle->native, nullptr, name.data(), name.size() ) )
+            throw core::error::from_win32( GetLastError() );
+
+        if ( id = GetProcessId( handle->native ); id == 0 )
+            throw core::error::from_win32( GetLastError() );
+    }
+
+}  // namespace wincpp
