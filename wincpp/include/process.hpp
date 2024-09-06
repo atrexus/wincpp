@@ -2,34 +2,20 @@
 
 #include <string>
 
-#include "modules/module_factory.hpp"
+#include "module_factory.hpp"
+#include "memory_factory.hpp"
 
 namespace wincpp
 {
-    /// <summary>
-    /// Defines the types of memory manipulations.
-    /// </summary>
-    enum class memory_type
-    {
-        /// <summary>
-        /// The memory is within the local process. Often, this is called "injected" or "Internal".
-        /// </summary>
-        local_t,
-
-        /// <summary>
-        /// The memory is not within the local process. Often this is called "remote" or "external".
-        /// </summary>
-        remote_t
-    };
-
     /// <summary>
     /// A class that offers functionality for working with processes.
     /// </summary>
     class process_t final
     {
+        friend class memory_factory;
+
         std::uint32_t id;
         std::string name;
-        std::shared_ptr< core::handle_t > handle;
 
         /// <summary>
         /// Creates a new process object.
@@ -38,14 +24,7 @@ namespace wincpp
         /// <param name="id">The process id.</param>
         /// <param name="name">The process name.</param>
         /// <param name="type">The memory type.</param>
-        explicit process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type );
-
-        /// <summary>
-        /// Creates a new process object.
-        /// </summary>
-        /// <param name="name">The handle to the process object..</param>
-        /// <param name="type">The memory type.</param>
-        explicit process_t( std::shared_ptr< core::handle_t > handle, memory_type type );
+        explicit process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept;
 
        public:
         /// <summary>
@@ -67,12 +46,22 @@ namespace wincpp
         /// <summary>
         /// Gets a handle to the current process.
         /// </summary>
-        static std::unique_ptr< process_t > current() noexcept;
+        static std::unique_ptr< process_t > current();
 
         /// <summary>
         /// The module factory object.
         /// </summary>
         module_factory module_factory;
+
+        /// <summary>
+        /// The memory factory object.
+        /// </summary>
+        memory_factory memory_factory;
+
+        /// <summary>
+        /// The handle to the process.
+        /// </summary>
+        std::shared_ptr< core::handle_t > handle;
     };
 
 }  // namespace wincpp

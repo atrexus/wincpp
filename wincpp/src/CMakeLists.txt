@@ -3,8 +3,14 @@ cmake_path(SET include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 # Add the header files to the project
 set(header_files 
 	"${include_dir}/process.hpp"
+	"${include_dir}/module_factory.hpp"
+	"${include_dir}/memory_factory.hpp"
 
-	"${include_dir}/modules/module_factory.hpp"
+	"${include_dir}/memory/pointer.hpp"
+	"${include_dir}/memory/region.hpp"
+	"${include_dir}/memory/protection.hpp"
+
+	"${include_dir}/modules/module_list.hpp"
 
 	"${include_dir}/core/win.hpp"
 	"${include_dir}/core/error.hpp"
@@ -35,14 +41,14 @@ target_link_libraries(wincpp INTERFACE _wincpp_core)
 target_sources(wincpp PRIVATE 	
 	"process.cpp"
 
-	"modules/module_factory.cpp"
+	"module_factory.cpp"
 
 	"core/win.cpp"
 	"core/error.cpp"
 	"core/snapshot.cpp"
 	
 	"core/errors/win32.cpp"
-)
+ "modules/module.cpp" "memory_factory.cpp" "memory/pointer.cpp" "memory/region.cpp" "memory/protection.cpp")
 
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})

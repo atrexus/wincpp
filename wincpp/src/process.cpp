@@ -43,28 +43,30 @@ namespace wincpp
         return nullptr;
     }
 
-    std::unique_ptr< process_t > process_t::current() noexcept
+    std::unique_ptr< process_t > process_t::current()
     {
-        return std::unique_ptr< process_t >( new process_t( core::handle_t::create( GetCurrentProcess(), false ), memory_type::local_t ) );
+        const auto handle = core::handle_t::create( GetCurrentProcess(), false );
+
+        // get the process id
+        std::uint32_t id = GetProcessId( handle->native );
+
+        // get the process name
+        std::string name;
+        name.resize( MAX_PATH );
+
+        if ( !GetModuleFileNameExA( handle->native, nullptr, name.data(), MAX_PATH ) )
+            throw core::error::from_win32( GetLastError() );
+
+        return std::unique_ptr< process_t >( new process_t( handle, id, name, memory_type::local_t ) );
     }
 
-    process_t::process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type )
+    process_t::process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept
         : handle( handle ),
           id( id ),
           name( name ),
-          module_factory( this )
+          module_factory( this ),
+          memory_factory( this, type )
     {
-    }
-
-    process_t::process_t( std::shared_ptr< core::handle_t > handle, memory_type type ) : handle( handle ), module_factory( this )
-    {
-        name.resize( MAX_PATH );
-
-        if ( !GetModuleBaseName( handle->native, nullptr, name.data(), name.size() ) )
-            throw core::error::from_win32( GetLastError() );
-
-        if ( id = GetProcessId( handle->native ); id == 0 )
-            throw core::error::from_win32( GetLastError() );
     }
 
 }  // namespace wincpp

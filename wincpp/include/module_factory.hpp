@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/win.hpp"
+#include "modules/module_list.hpp"
 
 namespace wincpp
 {
@@ -19,8 +20,13 @@ namespace wincpp
         /// Creates a new module factory object.
         /// </summary>
         /// <param name="process">The process object.</param>
-        explicit module_factory( process_t *p );
+        explicit module_factory( process_t *p ) noexcept;
 
        public:
+        /// <summary>
+        /// Gets a list of modules in the process.
+        /// </summary>
+        /// <returns>The list of modules.</returns>
+        modules::module_list_t list() const;
     };
-}  // namespace wincpp::modules
+}  // namespace wincpp
