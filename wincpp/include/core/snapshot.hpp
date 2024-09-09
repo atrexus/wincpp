@@ -82,7 +82,7 @@ namespace wincpp::core
         /// Returns the iterator for the beginning of the snapshot.
         /// </summary>
         /// <returns>Iterator.</returns>
-        iterator begin()
+        iterator begin() const
         {
             return iterator( handle );
         }
@@ -91,7 +91,7 @@ namespace wincpp::core
         /// Returns the end of the iterator.
         /// </summary>
         /// <returns>Iterator.</returns>
-        iterator end()
+        iterator end() const
         {
             return iterator( nullptr );
         }
@@ -141,7 +141,7 @@ namespace wincpp::core
     {
         std::shared_ptr< handle_t > handle;
         PROCESSENTRY32 entry;
-        process_entry_t result;
+        mutable process_entry_t result;
 
        public:
         /// <summary>
@@ -154,13 +154,13 @@ namespace wincpp::core
         /// Implements the `*` operator for the iterator.
         /// </summary>
         /// <returns>Reference to the process entry.</returns>
-        process_entry_t& operator*();
+        process_entry_t& operator*() const noexcept;
 
         /// <summary>
         /// Implements the `->` operator for the iterator.
         /// </summary>
         /// <returns>Pointer to the process entry.</returns>
-        process_entry_t* operator->();
+        process_entry_t* operator->() const noexcept;
 
         /// <summary>
         /// Implements the `++` operator for the iterator.
@@ -173,14 +173,14 @@ namespace wincpp::core
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const;
+        bool operator==( const iterator& other ) const noexcept;
 
         /// <summary>
         /// Compares the current iterator with another (not equals).
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const;
+        bool operator!=( const iterator& other ) const noexcept;
     };
 
     /// <summary>
@@ -218,7 +218,7 @@ namespace wincpp::core
     {
         std::shared_ptr< handle_t > handle;
         THREADENTRY32 entry;
-        thread_entry_t result;
+        mutable thread_entry_t result;
 
        public:
         /// <summary>
@@ -231,13 +231,13 @@ namespace wincpp::core
         /// Implements the `*` operator for the iterator.
         /// </summary>
         /// <returns>Reference to the process entry.</returns>
-        thread_entry_t& operator*();
+        thread_entry_t& operator*() const noexcept;
 
         /// <summary>
         /// Implements the `->` operator for the iterator.
         /// </summary>
         /// <returns>Pointer to the process entry.</returns>
-        thread_entry_t* operator->();
+        thread_entry_t* operator->() const noexcept;
 
         /// <summary>
         /// Implements the `++` operator for the iterator.
@@ -250,14 +250,14 @@ namespace wincpp::core
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const;
+        bool operator==( const iterator& other ) const noexcept;
 
         /// <summary>
         /// Compares the current iterator with another (not equals).
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const;
+        bool operator!=( const iterator& other ) const noexcept;
     };
 
     /// <summary>
@@ -266,9 +266,14 @@ namespace wincpp::core
     struct module_entry_t
     {
         /// <summary>
-        /// Default constructor.
+        /// Creates a new module entry.
         /// </summary>
-        module_entry_t() = default;
+        module_entry_t( const MODULEENTRY32& entry );
+
+        /// <summary>
+        /// Creates a copy of the module entry.
+        /// </summary>
+        module_entry_t( const module_entry_t& ) = default;
 
         /// <summary>
         /// The identifier of the process whose modules are to be examined.
@@ -309,7 +314,6 @@ namespace wincpp::core
     {
         std::shared_ptr< handle_t > handle;
         MODULEENTRY32 entry;
-        module_entry_t result;
 
        public:
         /// <summary>
@@ -322,13 +326,7 @@ namespace wincpp::core
         /// Implements the `*` operator for the iterator.
         /// </summary>
         /// <returns>Reference to the process entry.</returns>
-        module_entry_t& operator*();
-
-        /// <summary>
-        /// Implements the `->` operator for the iterator.
-        /// </summary>
-        /// <returns>Pointer to the process entry.</returns>
-        module_entry_t* operator->();
+        module_entry_t operator*() const noexcept;
 
         /// <summary>
         /// Implements the `++` operator for the iterator.
@@ -341,13 +339,13 @@ namespace wincpp::core
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const;
+        bool operator==( const iterator& other ) const noexcept;
 
         /// <summary>
         /// Compares the current iterator with another (not equals).
         /// </summary>
         /// <param name="other">The other iterator.</param>
         /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const;
+        bool operator!=( const iterator& other ) const noexcept;
     };
 }  // namespace wincpp::core

@@ -1,5 +1,6 @@
 #include "core/error.hpp"
-#include "process.hpp"
+#include "memory/pointer.hpp"
+#include "memory/region.hpp"
 
 namespace wincpp
 {

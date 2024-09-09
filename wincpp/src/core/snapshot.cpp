@@ -23,7 +23,7 @@ namespace wincpp::core
         }
     }
 
-    process_entry_t& snapshot< snapshot_kind::process_t >::iterator::operator*()
+    process_entry_t& snapshot< snapshot_kind::process_t >::iterator::operator*() const noexcept
     {
         result.id = entry.th32ProcessID;
         result.threads = entry.cntThreads;
@@ -34,7 +34,7 @@ namespace wincpp::core
         return result;
     }
 
-    inline process_entry_t* snapshot< snapshot_kind::process_t >::iterator::operator->()
+    inline process_entry_t* snapshot< snapshot_kind::process_t >::iterator::operator->() const noexcept
     {
         return &operator*();
     }
@@ -50,12 +50,12 @@ namespace wincpp::core
         return *this;
     }
 
-    bool snapshot< snapshot_kind::process_t >::iterator::operator==( const iterator& other ) const
+    bool snapshot< snapshot_kind::process_t >::iterator::operator==( const iterator& other ) const noexcept
     {
         return ( !handle && !other.handle ) || handle && other.handle && entry.th32ProcessID == other.entry.th32ProcessID;
     }
 
-    bool snapshot< snapshot_kind::process_t >::iterator::operator!=( const iterator& other ) const
+    bool snapshot< snapshot_kind::process_t >::iterator::operator!=( const iterator& other ) const noexcept
     {
         return !operator==( other );
     }
@@ -71,7 +71,7 @@ namespace wincpp::core
         }
     }
 
-    thread_entry_t& snapshot< snapshot_kind::thread_t >::iterator::operator*()
+    thread_entry_t& snapshot< snapshot_kind::thread_t >::iterator::operator*() const noexcept
     {
         result.id = entry.th32ThreadID;
         result.owner_id = entry.th32OwnerProcessID;
@@ -80,7 +80,7 @@ namespace wincpp::core
         return result;
     }
 
-    inline thread_entry_t* snapshot< snapshot_kind::thread_t >::iterator::operator->()
+    inline thread_entry_t* snapshot< snapshot_kind::thread_t >::iterator::operator->() const noexcept
     {
         return &operator*();
     }
@@ -96,14 +96,24 @@ namespace wincpp::core
         return *this;
     }
 
-    bool snapshot< snapshot_kind::thread_t >::iterator::operator==( const iterator& other ) const
+    bool snapshot< snapshot_kind::thread_t >::iterator::operator==( const iterator& other ) const noexcept
     {
         return ( !handle && !other.handle ) || handle && other.handle && entry.th32ThreadID == other.entry.th32ThreadID;
     }
 
-    bool snapshot< snapshot_kind::thread_t >::iterator::operator!=( const iterator& other ) const
+    bool snapshot< snapshot_kind::thread_t >::iterator::operator!=( const iterator& other ) const noexcept
     {
         return !operator==( other );
+    }
+
+    module_entry_t::module_entry_t( const MODULEENTRY32& entry )
+        : base_address( reinterpret_cast< std::uintptr_t >( entry.modBaseAddr ) ),
+          base_size( entry.modBaseSize ),
+          name( entry.szModule ),
+          path( entry.szExePath ),
+          process_id( entry.th32ProcessID ),
+          usage_count( entry.GlblcntUsage )
+    {
     }
 
     snapshot< snapshot_kind::module_t >::iterator::iterator( std::shared_ptr< handle_t > handle ) : handle( handle )
@@ -117,21 +127,9 @@ namespace wincpp::core
         }
     }
 
-    module_entry_t& snapshot< snapshot_kind::module_t >::iterator::operator*()
+    module_entry_t snapshot< snapshot_kind::module_t >::iterator::operator*() const noexcept
     {
-        result.base_address = reinterpret_cast< std::uintptr_t >( entry.modBaseAddr );
-        result.base_size = entry.modBaseSize;
-        result.name = entry.szModule;
-        result.path = entry.szExePath;
-        result.process_id = entry.th32ProcessID;
-        result.usage_count = entry.GlblcntUsage;
-
-        return result;
-    }
-
-    inline module_entry_t* snapshot< snapshot_kind::module_t >::iterator::operator->()
-    {
-        return &operator*();
+        return entry;
     }
 
     snapshot< snapshot_kind::module_t >::iterator& snapshot< snapshot_kind::module_t >::iterator::operator++()
@@ -145,12 +143,12 @@ namespace wincpp::core
         return *this;
     }
 
-    bool snapshot< snapshot_kind::module_t >::iterator::operator==( const iterator& other ) const
+    bool snapshot< snapshot_kind::module_t >::iterator::operator==( const iterator& other ) const noexcept
     {
         return ( !handle && !other.handle ) || handle && other.handle && entry.modBaseAddr == other.entry.modBaseAddr;
     }
 
-    bool snapshot< snapshot_kind::module_t >::iterator::operator!=( const iterator& other ) const
+    bool snapshot< snapshot_kind::module_t >::iterator::operator!=( const iterator& other ) const noexcept
     {
         return !operator==( other );
     }

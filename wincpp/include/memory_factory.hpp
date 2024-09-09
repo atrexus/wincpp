@@ -1,16 +1,19 @@
 #pragma once
 
-#include "memory/pointer.hpp"
-#include "memory/region.hpp"
+#include <memory>
+#include <string>
 
 namespace wincpp::memory
 {
     template< typename T >
     struct pointer_t;
+    class region_list;
 }
 
 namespace wincpp
 {
+    struct process_t;
+
     /// <summary>
     /// Defines the types of memory manipulations.
     /// </summary>
@@ -32,7 +35,7 @@ namespace wincpp
     /// </summary>
     class memory_factory final
     {
-        friend class process_t;
+        friend struct process_t;
 
         constexpr static std::size_t buffer_size = 256;
 

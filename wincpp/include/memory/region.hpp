@@ -1,10 +1,10 @@
 #pragma once
 
+#include "process.hpp"
 #include "protection.hpp"
 
 namespace wincpp
 {
-    class process_t;
     class memory_factory;
 }  // namespace wincpp
 

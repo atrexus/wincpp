@@ -2,31 +2,19 @@
 
 #include <string>
 
-#include "module_factory.hpp"
 #include "memory_factory.hpp"
+#include "module_factory.hpp"
 
 namespace wincpp
 {
     /// <summary>
     /// A class that offers functionality for working with processes.
     /// </summary>
-    class process_t final
+    struct process_t final
     {
         friend class memory_factory;
+        friend class module_factory;
 
-        std::uint32_t id;
-        std::string name;
-
-        /// <summary>
-        /// Creates a new process object.
-        /// </summary>
-        /// <param name="handle">The handle to the process object.</param>
-        /// <param name="id">The process id.</param>
-        /// <param name="name">The process name.</param>
-        /// <param name="type">The memory type.</param>
-        explicit process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept;
-
-       public:
         /// <summary>
         /// Opens a process by its name.
         /// </summary>
@@ -62,6 +50,26 @@ namespace wincpp
         /// The handle to the process.
         /// </summary>
         std::shared_ptr< core::handle_t > handle;
+
+        /// <summary>
+        /// The process id.
+        /// </summary>
+        std::uint32_t id;
+
+        /// <summary>
+        /// The process name.
+        /// </summary>
+        std::string name;
+
+       private:
+        /// <summary>
+        /// Creates a new process object.
+        /// </summary>
+        /// <param name="handle">The handle to the process object.</param>
+        /// <param name="id">The process id.</param>
+        /// <param name="name">The process name.</param>
+        /// <param name="type">The memory type.</param>
+        explicit process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept;
     };
 
 }  // namespace wincpp

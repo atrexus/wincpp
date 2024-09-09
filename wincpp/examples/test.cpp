@@ -8,7 +8,7 @@ int main()
 {
     try
     {
-        const auto process = process_t::open( "Notepad.exe" );
+        const auto process = process_t::current();
 
         if ( !process )
         {
@@ -16,10 +16,9 @@ int main()
             return 1;
         }
 
-        for ( const auto& region : process->memory_factory.regions() )
-        {
-            std::cout << "0x" << std::hex << region.address() << " (" << region.protection() << ")" << std::endl;
-        }
+        const auto& load_library = process->module_factory[ "kernel32.dll" ][ "LoadLibraryA" ];
+
+        std::cout << load_library << std::endl;
     }
     catch ( const std::exception& e )
     {
