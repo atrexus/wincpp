@@ -25,7 +25,7 @@ namespace wincpp::memory
         return flags & static_cast< std::uint32_t >( protection );
     }
 
-    inline std::uint32_t protection_flags_t::get() const noexcept
+    std::uint32_t protection_flags_t::get() const noexcept
     {
         return flags;
     }

@@ -131,7 +131,7 @@ namespace wincpp::memory
         /// <summary>
         /// Gets the protection flags.
         /// </summary>
-        inline std::uint32_t get() const noexcept;
+        std::uint32_t get() const noexcept;
 
         /// <summary>
         /// Checks if the protection flags are equal.

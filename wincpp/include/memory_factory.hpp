@@ -3,12 +3,14 @@
 #include <memory>
 #include <string>
 
+#include "memory/protection_operation.hpp"
+
 namespace wincpp::memory
 {
     template< typename T >
     struct pointer_t;
     class region_list;
-}
+}  // namespace wincpp::memory
 
 namespace wincpp
 {
@@ -99,6 +101,14 @@ namespace wincpp
         /// <param name="stop">The address to stop at.</param>
         /// <returns>The region list.</returns>
         memory::region_list regions( std::uintptr_t start = 0, std::uintptr_t stop = -1 ) const;
+
+        /// <summary>
+        /// Changes the protection of the specified memory region.
+        /// </summary>
+        /// <param name="address">The address of the memory to protect.</param>
+        /// <param name="size">The size of the memory to protect.</param>
+        /// <param name="new_flags">The new protection flags.</param>
+        memory::protection_operation protect( std::uintptr_t address, std::size_t size, memory::protection_flags_t new_flags ) const;
     };
 
     template< typename T >

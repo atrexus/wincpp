@@ -1,7 +1,7 @@
 #pragma once
 
 #include "process.hpp"
-#include "protection.hpp"
+#include "protection_operation.hpp"
 
 namespace wincpp
 {
@@ -128,6 +128,13 @@ namespace wincpp::memory
         /// <param name="value">The value to write.</param>
         template< typename T >
         inline void write( std::uintptr_t address, T value ) const;
+
+        /// <summary>
+        /// Changes the protection of the memory region.
+        /// </summary>
+        /// <param name="new_flags">The new protection flags.</param>
+        /// <returns>The protection operation object.</returns>
+        protection_operation protect( protection_flags_t new_flags ) const;
 
        private:
         /// <summary>

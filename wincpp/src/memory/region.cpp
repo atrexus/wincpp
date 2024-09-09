@@ -106,4 +106,9 @@ namespace wincpp::memory
         return process->memory_factory.write( address, buffer, size );
     }
 
+    protection_operation region_t::protect( protection_flags_t new_flags ) const
+    {
+        return process->memory_factory.protect( address(), size(), new_flags );
+    }
+
 }  // namespace wincpp::memory

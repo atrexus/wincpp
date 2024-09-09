@@ -62,4 +62,16 @@ namespace wincpp
     {
         return memory::region_list( p, start, stop );
     }
+
+    memory::protection_operation memory_factory::protect( std::uintptr_t address, std::size_t size, memory::protection_flags_t new_flags ) const
+    {
+        DWORD old_flags;
+
+        if ( !VirtualProtectEx( p->handle->native, reinterpret_cast< void * >( address ), size, new_flags.get(), &old_flags ) )
+            throw core::error::from_win32( GetLastError() );
+
+        return memory::protection_operation(
+            new memory::protection_operation_t( p, address, size, new_flags, old_flags ),
+            memory::protection_operation_t::protection_operation_deleter{} );
+    }
 }  // namespace wincpp
