@@ -73,3 +73,6 @@ namespace wincpp
     };
 
 }  // namespace wincpp
+
+#include "memory/pointer.hpp"
+#include "memory/region.hpp"

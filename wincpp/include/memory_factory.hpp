@@ -7,8 +7,16 @@
 
 namespace wincpp::memory
 {
+    /// <summary>
+    /// Forward declare the pointer_t struct.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     template< typename T >
     struct pointer_t;
+
+    /// <summary>
+    /// Forward declare the region_list class.
+    /// </summary>
     class region_list;
 }  // namespace wincpp::memory
 
@@ -92,7 +100,7 @@ namespace wincpp
         /// </summary>
         /// <param name="address">The address of the pointer.</param>
         /// <returns>The pointer to the memory.</returns>
-        const memory::pointer_t< std::uintptr_t > &operator[]( std::uintptr_t address ) const;
+        memory::pointer_t< std::uintptr_t > operator[]( std::uintptr_t address ) const;
 
         /// <summary>
         /// Gets all regions in the process.

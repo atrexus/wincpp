@@ -1,6 +1,7 @@
+#include "memory_factory.hpp"
+
 #include "core/error.hpp"
-#include "memory/pointer.hpp"
-#include "memory/region.hpp"
+#include "process.hpp"
 
 namespace wincpp
 {
@@ -53,9 +54,9 @@ namespace wincpp
         return size;
     }
 
-    const memory::pointer_t< std::uintptr_t > &memory_factory::operator[]( std::uintptr_t address ) const
+    memory::pointer_t< std::uintptr_t > memory_factory::operator[]( std::uintptr_t address ) const
     {
-        return memory::pointer_t< std::uintptr_t >( address, p );
+        return memory::pointer_t< std::uintptr_t >( address, *this );
     }
 
     memory::region_list wincpp::memory_factory::regions( std::uintptr_t start, std::uintptr_t stop ) const

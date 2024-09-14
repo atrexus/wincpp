@@ -1,6 +1,8 @@
-#include "process.hpp"
+#include "module_factory.hpp"
 
 #include <algorithm>
+
+#include "process.hpp"
 
 namespace wincpp
 {
@@ -8,16 +10,16 @@ namespace wincpp
     {
     }
 
-    modules::module_list_t module_factory::modules() const
+    modules::module_list module_factory::modules() const
     {
-        return modules::module_list_t( p );
+        return modules::module_list( p );
     }
 
-    modules::module_t wincpp::module_factory::main_module() const
+    modules::module_t module_factory::main_module() const
     {
         for ( const auto& module : modules() )
         {
-            if ( module.name() == p->name )
+            if ( module.name() == p->name.c_str() )
             {
                 return module;
             }

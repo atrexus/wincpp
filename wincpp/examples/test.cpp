@@ -1,9 +1,8 @@
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 #include "process.hpp"
-
 
 using namespace wincpp;
 
@@ -11,7 +10,7 @@ int main()
 {
     try
     {
-        const auto process = process_t::open( "Notepad.exe" );
+        const auto process = process_t::current();
 
         if ( !process )
         {
@@ -19,13 +18,9 @@ int main()
             return 1;
         }
 
-        if ( const auto& op = process->memory_factory.protect( 0x24796557000, 100, memory::protection_flags_t::execute_readwrite ) )
-        {
-            std::cout << "Successfully changed the protection of the memory." << std::endl;
-            std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
-        }
+        const auto rdata = process->module_factory.main_module().fetch_section( ".rdata" );
 
-        std::cout << "Resetting the protection of the memory." << std::endl;
+        std::cout << std::hex << rdata->address() << std::endl;
     }
     catch ( const std::exception& e )
     {

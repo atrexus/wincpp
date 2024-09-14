@@ -2,6 +2,8 @@
 
 #include "process.hpp"
 
+#include "modules/section.hpp"
+
 #include <algorithm>
 
 namespace wincpp::modules
@@ -10,8 +12,8 @@ namespace wincpp::modules
     {
         GetModuleInformation( process->handle->native, reinterpret_cast< HMODULE >( entry.base_address ), &info, sizeof( info ) );
 
-        // Load the module data into the buffer.
-        buffer = process->memory_factory.read( entry.base_address, entry.base_size );
+        // Load the module data into the buffer. We read the first 0x1000 bytes of the module as that is the maximum size of the headers.
+        buffer = process->memory_factory.read( entry.base_address, 0x1000 );
 
         // Get the DOS header.
         dos_header = reinterpret_cast< const IMAGE_DOS_HEADER * >( buffer.get() );
@@ -79,50 +81,65 @@ namespace wincpp::modules
         return std::nullopt;
     }
 
+    std::optional< module_t::section_t > module_t::fetch_section( const std::string_view name ) const
+    {
+        const auto section = IMAGE_FIRST_SECTION( nt_headers );
+
+        for ( std::uint16_t i = 0; i < nt_headers->FileHeader.NumberOfSections; ++i )
+        {
+            const auto current_section = section[ i ];
+
+            if ( name == reinterpret_cast< const char * >( current_section.Name ) )
+                return section_t( *this, current_section );
+        }
+
+        return std::nullopt;
+    }
+
     module_t::export_t module_t::operator[]( const std::string_view name ) const
     {
         return *fetch_export( name );
     }
 
-    module_list_t::module_list_t( process_t *process ) noexcept
+    module_list::module_list( process_t *process ) noexcept
         : process( process ),
           snapshot( core::snapshot< core::snapshot_kind::module_t >::create( process->id ) )
     {
     }
 
-    module_list_t::iterator module_list_t::begin() const noexcept
+    module_list::iterator module_list::begin() const noexcept
     {
         return iterator( process, snapshot.begin() );
     }
 
-    module_list_t::iterator module_list_t::end() const noexcept
+    module_list::iterator module_list::end() const noexcept
     {
         return iterator( process, snapshot.end() );
     }
 
-    module_list_t::iterator::iterator( process_t *process, const core::snapshot< core::snapshot_kind::module_t >::iterator &it ) noexcept
+    module_list::iterator::iterator( process_t *process, const core::snapshot< core::snapshot_kind::module_t >::iterator &it ) noexcept
         : process( process ),
           it( it )
     {
     }
 
-    module_t module_list_t::iterator::operator*() const noexcept
+    module_t module_list::iterator::operator*() const noexcept
     {
         return module_t( process, *it );
     }
 
-    module_list_t::iterator &module_list_t::iterator::operator++()
+    module_list::iterator &module_list::iterator::operator++()
     {
         ++it;
         return *this;
     }
 
-    bool module_list_t::iterator::operator==( const iterator &other ) const noexcept
+    bool module_list::iterator::operator==( const iterator &other ) const noexcept
     {
         return it == other.it;
     }
 
-    bool module_list_t::iterator::operator!=( const iterator &other ) const noexcept
+    bool module_list::iterator::operator!=( const iterator &other ) const noexcept
     {
         return !operator==( other );
     }

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "process.hpp"
+#include "memory_factory.hpp"
 
 namespace wincpp::memory
 {
@@ -22,8 +22,8 @@ namespace wincpp::memory
             /// Creates a new value object.
             /// </summary>
             /// <param name="address">The address of the value.</param>
-            /// <param name="process">The process object.</param>
-            explicit value_t( std::uintptr_t address, process_t *process ) noexcept : address( address ), process( process )
+            /// <param name="factory">The process's memory factory.</param>
+            explicit value_t( std::uintptr_t address, const memory_factory &factory ) noexcept : address( address ), factory( factory )
             {
             }
 
@@ -33,7 +33,7 @@ namespace wincpp::memory
             /// <returns>The value as type T.</returns>
             inline operator T() const
             {
-                return process->memory_factory.read< T >( address );
+                return factory.read< T >( address );
             }
 
             /// <summary>
@@ -41,7 +41,7 @@ namespace wincpp::memory
             /// </summary>
             inline const value_t &operator=( T value ) const
             {
-                process->memory_factory.write< T >( address, value );
+                factory.write< T >( address, value );
                 return *this;
             }
 
@@ -102,15 +102,15 @@ namespace wincpp::memory
             }
 
             std::uintptr_t address;
-            process_t *process;
+            memory_factory factory;
         };
 
         /// <summary>
         /// Creates a new pointer object.
         /// </summary>
         /// <param name="address">The address of the pointer.</param>
-        /// <param name="process">The process object.</param>
-        explicit pointer_t( const std::uintptr_t address, process_t *process ) noexcept : value( address, process )
+        /// <param name="factory">The process's memory factory.</param>
+        explicit pointer_t( const std::uintptr_t address, const memory_factory &factory ) noexcept : value( address, factory )
         {
         }
 
@@ -148,7 +148,7 @@ namespace wincpp::memory
         {
             if ( value.address != 0 )
             {
-                for ( const auto &region : value.process->memory_factory.regions() )
+                for ( const auto &region : value.memory_factory.regions() )
                 {
                     if ( region.contains( value.address ) )
                     {

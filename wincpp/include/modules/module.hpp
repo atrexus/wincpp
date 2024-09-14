@@ -16,19 +16,24 @@ namespace wincpp
 
 namespace wincpp::modules
 {
-    class module_list_t;
+    class module_list;
 
     /// <summary>
     /// Class representing a module in a process.
     /// </summary>
     struct module_t final
     {
-        friend class module_list_t;
+        friend class module_list;
 
         /// <summary>
         /// Represents an export of a module.
         /// </summary>
         struct export_t;
+
+        /// <summary>
+        /// Represents a section of a module.
+        /// </summary>
+        struct section_t;
 
         /// <summary>
         /// Gets the name of the module.
@@ -63,6 +68,13 @@ namespace wincpp::modules
         std::optional< export_t > fetch_export( const std::string_view name ) const;
 
         /// <summary>
+        /// Gets the section by its name.
+        /// </summary>
+        /// <param name="name">The name of the section.</param>
+        /// <returns>The section.</returns>
+        std::optional< section_t > fetch_section( const std::string_view name ) const;
+
+        /// <summary>
         /// Gets the export by its name.
         /// </summary>
         export_t operator[]( const std::string_view name ) const;
@@ -88,7 +100,7 @@ namespace wincpp::modules
     /// <summary>
     /// Represents a list of modules in the remote process. Contains the iterator for ToolHelp32Snapshot.
     /// </summary>
-    class module_list_t final
+    class module_list final
     {
         friend class module_factory;
 
@@ -99,7 +111,7 @@ namespace wincpp::modules
         /// Creates a new module list object.
         /// </summary>
         /// <param name="process">The process object.</param>
-        explicit module_list_t( process_t *process ) noexcept;
+        explicit module_list( process_t *process ) noexcept;
 
        public:
         /// <summary>
@@ -118,9 +130,9 @@ namespace wincpp::modules
         iterator end() const noexcept;
     };
 
-    class module_list_t::iterator final
+    class module_list::iterator final
     {
-        friend class module_list_t;
+        friend class module_list;
 
         process_t *process;
         core::snapshot< core::snapshot_kind::module_t >::iterator it;

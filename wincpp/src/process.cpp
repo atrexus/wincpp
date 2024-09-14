@@ -54,7 +54,7 @@ namespace wincpp
         std::string name;
         name.resize( MAX_PATH );
 
-        if ( !GetModuleFileNameExA( handle->native, nullptr, name.data(), MAX_PATH ) )
+        if ( !GetModuleBaseName( handle->native, nullptr, name.data(), MAX_PATH ) )
             throw core::error::from_win32( GetLastError() );
 
         return std::unique_ptr< process_t >( new process_t( handle, id, name, memory_type::local_t ) );

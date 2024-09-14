@@ -2,8 +2,21 @@
 
 // clang-format off
 #include "core/win.hpp"
-#include "modules/export.hpp"
 // clang-format on
+
+namespace wincpp::modules
+{
+    /// <summary>
+    /// Forward declaration of module_t.
+    /// </summary>
+    struct module_t;
+
+    /// <summary>
+    /// Forward declaration of module_list.
+    /// </summary>
+    class module_list;
+
+}  // namespace wincpp::modules
 
 namespace wincpp
 {
@@ -29,7 +42,7 @@ namespace wincpp
         /// Gets a list of modules in the process.
         /// </summary>
         /// <returns>The list of modules.</returns>
-        modules::module_list_t modules() const;
+        modules::module_list modules() const;
 
         /// <summary>
         /// Gets the main module of the process.
@@ -49,3 +62,7 @@ namespace wincpp
         modules::module_t operator[]( const std::string_view name ) const;
     };
 }  // namespace wincpp
+
+#include "modules/module.hpp"
+#include "modules/export.hpp"
+#include "modules/section.hpp"

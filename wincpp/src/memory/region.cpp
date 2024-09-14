@@ -5,13 +5,11 @@
 
 namespace wincpp::memory
 {
-    region_t::region_t( process_t *process, MEMORY_BASIC_INFORMATION mbi ) : process( process ), mbi( mbi )
+    region_t::region_t( process_t *process, MEMORY_BASIC_INFORMATION mbi )
+        : memory_t( process->memory_factory, reinterpret_cast< std::uintptr_t >( mbi.BaseAddress ), mbi.RegionSize ),
+          process( process ),
+          mbi( mbi )
     {
-    }
-
-    std::uintptr_t region_t::address() const noexcept
-    {
-        return reinterpret_cast< std::uintptr_t >( mbi.BaseAddress );
     }
 
     region_t::state_t region_t::state() const noexcept
@@ -27,16 +25,6 @@ namespace wincpp::memory
     protection_flags_t region_t::protection() const noexcept
     {
         return protection_flags_t( mbi.Protect );
-    }
-
-    std::size_t region_t::size() const noexcept
-    {
-        return static_cast< std::size_t >( mbi.RegionSize );
-    }
-
-    inline bool region_t::contains( std::uintptr_t address ) const noexcept
-    {
-        return address >= this->address() && address < this->address() + size();
     }
 
     region_list::region_list( process_t *process, std::uintptr_t start, std::uintptr_t stop ) noexcept
@@ -94,16 +82,6 @@ namespace wincpp::memory
     bool region_list::iterator::operator==( const iterator &other ) const noexcept
     {
         return address == other.address;
-    }
-
-    inline std::shared_ptr< std::uint8_t[] > region_t::read( std::uintptr_t address, std::size_t size ) const
-    {
-        return process->memory_factory.read( address, size );
-    }
-
-    inline std::size_t region_t::write( std::uintptr_t address, std::shared_ptr< std::uint8_t[] > buffer, std::size_t size ) const
-    {
-        return process->memory_factory.write( address, buffer, size );
     }
 
     protection_operation region_t::protect( protection_flags_t new_flags ) const

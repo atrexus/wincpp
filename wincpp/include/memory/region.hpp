@@ -1,12 +1,7 @@
 #pragma once
 
-#include "process.hpp"
-#include "protection_operation.hpp"
-
-namespace wincpp
-{
-    class memory_factory;
-}  // namespace wincpp
+#include "memory/memory.hpp"
+#include "memory/protection_operation.hpp"
 
 namespace wincpp::memory
 {
@@ -15,7 +10,7 @@ namespace wincpp::memory
     /// <summary>
     /// Represents a contiguous block of memory in the remote process.
     /// </summary>
-    struct region_t final
+    struct region_t : public memory_t
     {
         friend class region_list;
 
@@ -63,11 +58,6 @@ namespace wincpp::memory
         };
 
         /// <summary>
-        /// Gets the base address of the region.
-        /// </summary>
-        std::uintptr_t address() const noexcept;
-
-        /// <summary>
         /// Gets the state of the pages in the region.
         /// </summary>
         state_t state() const noexcept;
@@ -81,53 +71,6 @@ namespace wincpp::memory
         /// Gets the protection of the pages in the region.
         /// </summary>
         protection_flags_t protection() const noexcept;
-
-        /// <summary>
-        /// Gets the size of the region.
-        /// </summary>
-        std::size_t size() const noexcept;
-
-        /// <summary>
-        /// Determines if the region contains the specified address.
-        /// </summary>
-        /// <param name="address">The address to check.</param>
-        /// <returns>True if the region contains the address, false otherwise.</returns>
-        inline bool contains( std::uintptr_t address ) const noexcept;
-
-        /// <summary>
-        /// Reads memory from the process.
-        /// </summary>
-        /// <param name="address">The address to read from.</param>
-        /// <param name="size">The size of the memory to read.</param>
-        /// <returns>The memory read.</returns>
-        inline std::shared_ptr< std::uint8_t[] > read( std::uintptr_t address, std::size_t size ) const;
-
-        /// <summary>
-        /// Reads a value from memory.
-        /// </summary>
-        /// <typeparam name="T">The type of value to read.</typeparam>
-        /// <param name="address">The address to read from.</param>
-        /// <returns>The value read.</returns>
-        template< typename T >
-        inline T read( std::uintptr_t address ) const;
-
-        /// <summary>
-        /// Writes memory to the process.
-        /// </summary>
-        /// <param name="address">The address to write to.</param>
-        /// <param name="buffer">The buffer to write.</param>
-        /// <param name="size">The size of the buffer.</param>
-        /// <returns>The number of bytes written.</returns>
-        inline std::size_t write( std::uintptr_t address, std::shared_ptr< std::uint8_t[] > buffer, std::size_t size ) const;
-
-        /// <summary>
-        /// Writes a value to memory.
-        /// </summary>
-        /// <typeparam name="T">The type of value to write.</typeparam>
-        /// <param name="address">The address to write to.</param>
-        /// <param name="value">The value to write.</param>
-        template< typename T >
-        inline void write( std::uintptr_t address, T value ) const;
 
         /// <summary>
         /// Changes the protection of the memory region.
@@ -222,17 +165,5 @@ namespace wincpp::memory
         /// </summary>
         bool operator!=( const iterator &other ) const noexcept;
     };
-
-    template< typename T >
-    inline T region_t::read( std::uintptr_t address ) const
-    {
-        return process->memory_factory.read< T >( address );
-    }
-
-    template< typename T >
-    inline void region_t::write( std::uintptr_t address, T value ) const
-    {
-        process->memory_factory.write( address, value );
-    }
 
 }  // namespace wincpp::memory
