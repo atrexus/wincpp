@@ -17,18 +17,23 @@ namespace wincpp
 
     modules::module_t module_factory::main_module() const
     {
-        for ( const auto& module : modules() )
-        {
-            if ( module.name() == p->name().data() )
-            {
-                return module;
-            }
-        }
-
-        throw std::runtime_error( "Failed to find the main module." );
+        return fetch_module( p->name() );
     }
 
     modules::module_t module_factory::fetch_module( const std::string_view name ) const
+    {
+        for ( const auto& entry : core::snapshot< core::snapshot_kind::module_t >::create( p->id() ) )
+        {
+            if ( entry.name == name.data() )
+            {
+                return modules::module_t( p, entry );
+            }
+        }
+
+        throw std::runtime_error( std::format( "Failed to find module \"{}\"", name ) );
+    }
+
+    modules::module_t module_factory::operator[]( const std::string_view name ) const
     {
         std::string data( name );
 
@@ -41,19 +46,6 @@ namespace wincpp
             data.append( ".dll" );
         }
 
-        for ( const auto& module : modules() )
-        {
-            if ( module.name() == data )
-            {
-                return module;
-            }
-        }
-
-        throw std::runtime_error( "Failed to find the module." );
-    }
-
-    modules::module_t module_factory::operator[]( const std::string_view name ) const
-    {
-        return fetch_module( name );
+        return fetch_module( data );
     }
 }  // namespace wincpp

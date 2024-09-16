@@ -22,9 +22,13 @@ int main()
 
         std::cout << std::hex << rdata->address() << std::endl;
     }
+    catch ( const std::system_error& e )
+    {
+        std::cout << "[-] System Error [" << e.code() << "]: " << e.what() << std::endl;
+    }
     catch ( const std::exception& e )
     {
-        std::cout << e.what() << std::endl;
+        std::cout << "[-] Error: " << e.what() << std::endl;
     }
 
     return 0;

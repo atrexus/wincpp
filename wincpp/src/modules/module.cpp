@@ -12,7 +12,7 @@ namespace wincpp::modules
     {
         GetModuleInformation( process->handle->native, reinterpret_cast< HMODULE >( entry.base_address ), &info, sizeof( info ) );
 
-        // Load the module data into the buffer. We read the first 0x1000 bytes of the module as that is the maximum size of the headers.
+        // Load the module data into the buffer. We read the first page of the module as that is the maximum size of the headers.
         buffer = process->memory_factory.read( entry.base_address, 0x1000 );
 
         // Get the DOS header.

@@ -24,6 +24,7 @@ namespace wincpp::modules
     struct module_t final
     {
         friend class module_list;
+        friend class module_factory;
 
         /// <summary>
         /// Represents an export of a module.
