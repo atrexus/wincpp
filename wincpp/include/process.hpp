@@ -47,19 +47,25 @@ namespace wincpp
         memory_factory memory_factory;
 
         /// <summary>
-        /// The handle to the process.
+        /// Gets the process id.
+        /// </summary>
+        constexpr std::uint32_t id() const noexcept
+        {
+            return entry.id;
+        }
+
+        /// <summary>
+        /// Gets the process name.
+        /// </summary>
+        constexpr std::string_view name() const noexcept
+        {
+            return entry.name;
+        }
+
+        /// <summary>
+        /// Gets the process handle.
         /// </summary>
         std::shared_ptr< core::handle_t > handle;
-
-        /// <summary>
-        /// The process id.
-        /// </summary>
-        std::uint32_t id;
-
-        /// <summary>
-        /// The process name.
-        /// </summary>
-        std::string name;
 
        private:
         /// <summary>
@@ -69,7 +75,10 @@ namespace wincpp
         /// <param name="id">The process id.</param>
         /// <param name="name">The process name.</param>
         /// <param name="type">The memory type.</param>
-        explicit process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept;
+        explicit process_t( std::shared_ptr< core::handle_t > handle, const core::process_entry_t& entry, memory_type type ) noexcept;
+
+        core::process_entry_t entry;
+        
     };
 
 }  // namespace wincpp

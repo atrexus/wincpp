@@ -103,7 +103,7 @@ namespace wincpp::modules
 
     module_list::module_list( process_t *process ) noexcept
         : process( process ),
-          snapshot( core::snapshot< core::snapshot_kind::module_t >::create( process->id ) )
+          snapshot( core::snapshot< core::snapshot_kind::module_t >::create( process->id() ) )
     {
     }
 

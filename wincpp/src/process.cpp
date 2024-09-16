@@ -1,4 +1,6 @@
 #include "process.hpp"
+#include "process.hpp"
+#include "process.hpp"
 
 #include <psapi.h>
 
@@ -6,7 +8,6 @@
 
 namespace wincpp
 {
-
     std::unique_ptr< process_t > process_t::open( std::string_view name, std::uint32_t access )
     {
         for ( const auto& proc : core::snapshot< core::snapshot_kind::process_t >::create() )
@@ -18,7 +19,7 @@ namespace wincpp
                 if ( !handle )
                     throw core::error::from_win32( GetLastError() );
 
-                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc.id, proc.name, memory_type::remote_t ) );
+                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc, memory_type::remote_t ) );
             }
         }
 
@@ -36,7 +37,7 @@ namespace wincpp
                 if ( !handle )
                     throw core::error::from_win32( GetLastError() );
 
-                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc.id, proc.name, memory_type::remote_t ) );
+                return std::unique_ptr< process_t >( new process_t( core::handle_t::create( handle ), proc, memory_type::remote_t ) );
             }
         }
 
@@ -47,23 +48,19 @@ namespace wincpp
     {
         const auto handle = core::handle_t::create( GetCurrentProcess(), false );
 
-        // get the process id
-        std::uint32_t id = GetProcessId( handle->native );
+        core::process_entry_t entry{};
 
-        // get the process name
-        std::string name;
-        name.resize( MAX_PATH );
+        entry.id = GetProcessId( handle->native );
 
-        if ( !GetModuleBaseName( handle->native, nullptr, name.data(), MAX_PATH ) )
+        if ( !GetModuleBaseName( handle->native, nullptr, entry.name.data(), MAX_PATH ) )
             throw core::error::from_win32( GetLastError() );
 
-        return std::unique_ptr< process_t >( new process_t( handle, id, name, memory_type::local_t ) );
+        return std::unique_ptr< process_t >( new process_t( handle, entry, memory_type::local_t ) );
     }
 
-    process_t::process_t( std::shared_ptr< core::handle_t > handle, std::uint32_t id, std::string_view name, memory_type type ) noexcept
+    process_t::process_t( std::shared_ptr< core::handle_t > handle, const core::process_entry_t& entry, memory_type type ) noexcept
         : handle( handle ),
-          id( id ),
-          name( name ),
+          entry( entry ),
           module_factory( this ),
           memory_factory( this, type )
     {

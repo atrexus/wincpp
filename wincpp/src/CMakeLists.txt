@@ -16,10 +16,12 @@ set(header_files
 	"${include_dir}/modules/export.hpp"
 	"${include_dir}/modules/section.hpp"
 
+	"${include_dir}/patterns/scanner.hpp"
+	"${include_dir}/patterns/pattern.hpp"
+
 	"${include_dir}/core/win.hpp"
 	"${include_dir}/core/error.hpp"
 	"${include_dir}/core/snapshot.hpp"
-
 	"${include_dir}/core/errors/win32.hpp"
 )
 
@@ -52,7 +54,7 @@ target_sources(wincpp PRIVATE
 	"core/snapshot.cpp"
 	
 	"core/errors/win32.cpp"
- "modules/module.cpp" "memory_factory.cpp" "memory/pointer.cpp" "memory/region.cpp" "memory/protection.cpp" "modules/export.cpp" "memory/protection_operation.cpp" "modules/section.cpp" )
+ "modules/module.cpp" "memory_factory.cpp" "memory/pointer.cpp" "memory/region.cpp" "memory/protection.cpp" "modules/export.cpp" "memory/protection_operation.cpp" "modules/section.cpp"  "patterns/scanner.cpp" "patterns/pattern.cpp")
 
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})

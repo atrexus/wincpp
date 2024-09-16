@@ -19,7 +19,7 @@ namespace wincpp
     {
         for ( const auto& module : modules() )
         {
-            if ( module.name() == p->name.c_str() )
+            if ( module.name() == p->name().data() )
             {
                 return module;
             }
