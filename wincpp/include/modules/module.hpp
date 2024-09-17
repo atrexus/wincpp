@@ -89,7 +89,7 @@ namespace wincpp::modules
         explicit module_t( process_t *process, const core::module_entry_t& entry ) noexcept;
 
         process_t *process;
-        const core::module_entry_t entry;
+        core::module_entry_t entry;
         MODULEINFO info;
 
         const IMAGE_DOS_HEADER *dos_header;

@@ -60,7 +60,6 @@ namespace wincpp::patterns
         /// </summary>
         friend std::ostream& operator<<( std::ostream& os, const pattern_t& p ) noexcept;
 
-       protected:
         std::shared_ptr< std::uint8_t[] > bytes;
         std::shared_ptr< bool[] > mask;
         std::size_t size = 0;

@@ -90,6 +90,21 @@ namespace wincpp::patterns
         return p;
     }
 
+    bool pattern_t::matches( const std::uint8_t* data ) const noexcept
+    {
+        // Note: we know the sizes are the same.
+
+        for ( std::size_t i = 0; i < size; ++i )
+        {
+            if ( mask[ i ] && bytes[ i ] != data[ i ] )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     std::string pattern_t::to_string() const noexcept
     {
         std::stringstream ss;
