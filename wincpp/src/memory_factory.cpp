@@ -71,8 +71,6 @@ namespace wincpp
         if ( !VirtualProtectEx( p->handle->native, reinterpret_cast< void * >( address ), size, new_flags.get(), &old_flags ) )
             throw core::error::from_win32( GetLastError() );
 
-        return memory::protection_operation(
-            new memory::protection_operation_t( p, address, size, new_flags, old_flags ),
-            memory::protection_operation_t::protection_operation_deleter{} );
+        return memory::protection_operation( new memory::protection_operation_t( address, size, new_flags, old_flags ), p->handle );
     }
 }  // namespace wincpp
