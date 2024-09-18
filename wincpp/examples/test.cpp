@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 
-#include "patterns/pattern.hpp"
+#include "patterns/scanner.hpp"
 #include "process.hpp"
 
 using namespace wincpp;
@@ -11,7 +11,7 @@ int main()
 {
     try
     {
-        const auto process = process_t::current();
+        const auto process = process_t::open( "RobloxPlayerBeta.exe" );
 
         if ( !process )
         {
@@ -19,13 +19,9 @@ int main()
             return 1;
         }
 
-        const auto pattern = patterns::pattern_t( "48 8B 05 ? ? ? ? 48 8B 0C C8 48 8B 04 D1 48 8B 04 D1" );
+        const auto& main_module = process->module_factory.main_module();
 
-        const auto pattern2 = patterns::pattern_t( "\x48\x8B\x05\x00\x00\x00\x00\x45", "xxx????x" );
-
-        const auto pattern3 = patterns::pattern_t::from< std::string >( ".?AVDataModel@RBX@@" );
-
-        std::cout << pattern3 << std::endl;
+        const auto objects = main_module.fetch_objects( ".?AVDataModel@RBX@@" );
     }
     catch ( const std::system_error& e )
     {

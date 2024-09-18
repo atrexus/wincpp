@@ -1,9 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <string_view>
-#include <ostream>
 
 namespace wincpp::patterns
 {
@@ -80,17 +80,27 @@ namespace wincpp::patterns
     template< typename T >
     inline pattern_t pattern_t::from( const T& object ) noexcept
     {
-        pattern_t pattern{ sizeof( T ) };
+        pattern_t p{};
+
+        p.size = sizeof( T );
+        p.bytes = std::make_shared< std::uint8_t[] >( sizeof( T ) );
+        p.mask = std::make_shared< bool[] >( sizeof( T ) );
 
         const auto begin = reinterpret_cast< const std::uint8_t* >( std::addressof( object ) );
 
-        for ( auto i = 0; i < pattern.size; ++i )
+        for ( auto i = 0; i < p.size; ++i )
         {
-            pattern.bytes[ i ] = begin[ i ];
-            pattern.mask[ i ] = true;
+            p.bytes[ i ] = begin[ i ];
+            p.mask[ i ] = true;
         }
 
-        return pattern;
+        // print the pattern
+        for (int i = 0; i < p.size; ++i)
+        {
+            printf( "%02X ", p.bytes[ i ] );
+        }
+
+        return p;
     }
 
 }  // namespace wincpp::patterns

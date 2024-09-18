@@ -20,6 +20,14 @@ namespace wincpp::memory
     class region_list;
 }  // namespace wincpp::memory
 
+namespace wincpp::modules
+{
+    /// <summary>
+    /// Forward declare the module_t struct.
+    /// </summary>
+    struct module_t;
+}
+
 namespace wincpp
 {
     struct process_t;
@@ -46,6 +54,7 @@ namespace wincpp
     class memory_factory final
     {
         friend struct process_t;
+        friend struct modules::module_t;
 
         constexpr static std::size_t buffer_size = 256;
 

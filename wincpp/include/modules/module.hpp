@@ -2,11 +2,13 @@
 
 // clang-format off
 #include "core/snapshot.hpp"
+#include "memory/memory.hpp"
 // clang-format on
 
 #include <Psapi.h>
 
 #include <optional>
+#include <vector>
 
 namespace wincpp
 {
@@ -21,7 +23,7 @@ namespace wincpp::modules
     /// <summary>
     /// Class representing a module in a process.
     /// </summary>
-    struct module_t final
+    struct module_t : public memory::memory_t
     {
         friend class module_list;
         friend class module_factory;
@@ -37,14 +39,14 @@ namespace wincpp::modules
         struct section_t;
 
         /// <summary>
+        /// Represents an object (class/struct) in the module.
+        /// </summary>
+        struct object_t;
+
+        /// <summary>
         /// Gets the name of the module.
         /// </summary>
         std::string name() const noexcept;
-
-        /// <summary>
-        /// Gets the memory address where the module is loaded.
-        /// </summary>
-        std::uintptr_t base() const noexcept;
 
         /// <summary>
         /// Gets the memory address of the entry point of the module.
@@ -55,11 +57,6 @@ namespace wincpp::modules
         /// Gets the full path to the module.
         /// </summary>
         std::string path() const noexcept;
-
-        /// <summary>
-        /// Gets the size of the module in bytes.
-        /// </summary>
-        std::size_t size() const noexcept;
 
         /// <summary>
         /// Gets the export by its name.
@@ -76,6 +73,13 @@ namespace wincpp::modules
         std::optional< section_t > fetch_section( const std::string_view name ) const;
 
         /// <summary>
+        /// Locates all objects in the module by their mangled name.
+        /// </summary>
+        /// <param name="mangled">The mangled name.</param>
+        /// <returns>A list of objects.</returns>
+        std::vector< std::shared_ptr< object_t > > fetch_objects( const std::string_view mangled ) const;
+
+        /// <summary>
         /// Gets the export by its name.
         /// </summary>
         export_t operator[]( const std::string_view name ) const;
@@ -84,11 +88,10 @@ namespace wincpp::modules
         /// <summary>
         /// Creates a new module object.
         /// </summary>
-        /// <param name="process">The process object.</param>
+        /// <param name="factory">The memory factory.</param>
         /// <param name="entry">The module entry.</param>
-        explicit module_t( process_t *process, const core::module_entry_t& entry ) noexcept;
+        explicit module_t( const memory_factory &factory, const core::module_entry_t &entry ) noexcept;
 
-        process_t *process;
         core::module_entry_t entry;
         MODULEINFO info;
 

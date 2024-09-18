@@ -26,7 +26,7 @@ namespace wincpp
         {
             if ( entry.name == name.data() )
             {
-                return modules::module_t( p, entry );
+                return modules::module_t( p->memory_factory, entry );
             }
         }
 

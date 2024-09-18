@@ -44,27 +44,21 @@ namespace wincpp::memory
         return iterator( process, stop );
     }
 
-    region_list::iterator::iterator( process_t *process, std::uintptr_t address ) : process( process ), address( address )
+    region_list::iterator::iterator( process_t *process, std::uintptr_t address ) : process( process ), address( address ), mbi()
     {
-        MEMORY_BASIC_INFORMATION info{};
-
         if ( address != -1 )
         {
-            if ( !VirtualQueryEx( process->handle->native, reinterpret_cast< void * >( address ), &info, sizeof( info ) ) )
+            if ( VirtualQueryEx( process->handle->native, reinterpret_cast< LPCVOID >( address ), &mbi, sizeof( mbi ) ) == 0 )
                 throw core::error::from_win32( GetLastError() );
-
-            this->address = reinterpret_cast< std::uintptr_t >( info.BaseAddress ) + info.RegionSize;
         }
-
-        mbi = info;
     }
 
     region_list::iterator &region_list::iterator::operator++() noexcept
     {
-        if ( VirtualQueryEx( process->handle->native, reinterpret_cast< void * >( address ), &mbi, sizeof( mbi ) ) == 0 )
+        address = reinterpret_cast< std::uintptr_t >( mbi.BaseAddress ) + mbi.RegionSize;
+
+        if ( VirtualQueryEx( process->handle->native, reinterpret_cast< LPCVOID >( address ), &mbi, sizeof( mbi ) ) == 0 )
             address = -1;
-        else
-            address += mbi.RegionSize;
 
         return *this;
     }

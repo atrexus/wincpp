@@ -11,7 +11,7 @@ namespace wincpp::modules
 
     std::uintptr_t module_t::export_t::virtual_address() const noexcept
     {
-        return mod.base() + rva;
+        return mod.address() + rva;
     }
 
     std::uint16_t module_t::export_t::ordinal() const noexcept

@@ -1,19 +1,23 @@
 #include "modules/module.hpp"
 
-#include "process.hpp"
-
-#include "modules/section.hpp"
-
 #include <algorithm>
+
+#include "modules/object.hpp"
+#include "modules/section.hpp"
+#include "patterns/scanner.hpp"
+#include "process.hpp"
 
 namespace wincpp::modules
 {
-    module_t::module_t( process_t *process, const core::module_entry_t &entry ) noexcept : process( process ), entry( entry ), info()
+    module_t::module_t( const memory_factory &factory, const core::module_entry_t &entry ) noexcept
+        : memory_t( factory, entry.base_address, entry.base_size ),
+          entry( entry ),
+          info()
     {
-        GetModuleInformation( process->handle->native, reinterpret_cast< HMODULE >( entry.base_address ), &info, sizeof( info ) );
+        GetModuleInformation( factory.p->handle->native, reinterpret_cast< HMODULE >( entry.base_address ), &info, sizeof( info ) );
 
         // Load the module data into the buffer. We read the first page of the module as that is the maximum size of the headers.
-        buffer = process->memory_factory.read( entry.base_address, 0x1000 );
+        buffer = factory.read( entry.base_address, 0x1000 );
 
         // Get the DOS header.
         dos_header = reinterpret_cast< const IMAGE_DOS_HEADER * >( buffer.get() );
@@ -32,11 +36,6 @@ namespace wincpp::modules
         return name;
     }
 
-    std::uintptr_t module_t::base() const noexcept
-    {
-        return entry.base_address;
-    }
-
     std::uintptr_t module_t::entry_point() const noexcept
     {
         return reinterpret_cast< std::uintptr_t >( info.EntryPoint );
@@ -45,11 +44,6 @@ namespace wincpp::modules
     std::string module_t::path() const noexcept
     {
         return entry.path;
-    }
-
-    std::size_t module_t::size() const noexcept
-    {
-        return static_cast< std::size_t >( entry.base_size );
     }
 
     std::optional< module_t::export_t > module_t::fetch_export( const std::string_view name ) const
@@ -96,6 +90,42 @@ namespace wincpp::modules
         return std::nullopt;
     }
 
+    std::vector< std::shared_ptr< module_t::object_t > > module_t::fetch_objects( const std::string_view mangled ) const
+    {
+        std::vector< std::shared_ptr< module_t::object_t > > objects;
+
+        const auto &scanner = patterns::scanner( *this );
+
+        const auto result = scanner.find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( mangled ) );
+
+        if ( !result )
+            return {};
+
+        // Calculate the type descriptor address based on the match for the string.
+        const auto type_descriptor_address = *result - sizeof( rtti::type_descriptor_t );
+        const auto type_descriptor_rva = static_cast< std::int32_t >( type_descriptor_address - address() );
+
+        // Find all cross references to the type descriptor in the .rdata section.
+        const auto rdata_scanner = patterns::scanner( *fetch_section( ".rdata" ) );
+        const auto cross_references =
+            rdata_scanner.find_all< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( type_descriptor_rva ) );
+
+        for ( const auto &reference : cross_references )
+        {
+            const auto col_address = reference - sizeof( std::uint32_t ) * 3;
+
+            // Now we read the complete object locator and check if its valid.
+            const auto col = read< rtti::complete_object_locator_t >( col_address );
+
+            if ( col.signature != 1 )
+                continue;
+
+            std::printf( "Found COL at 0x%08X\n", (int)col_address );
+        }
+
+        return objects;
+    }
+
     module_t::export_t module_t::operator[]( const std::string_view name ) const
     {
         return *fetch_export( name );
@@ -125,7 +155,7 @@ namespace wincpp::modules
 
     module_t module_list::iterator::operator*() const noexcept
     {
-        return module_t( process, *it );
+        return module_t( process->memory_factory, *it );
     }
 
     module_list::iterator &module_list::iterator::operator++()

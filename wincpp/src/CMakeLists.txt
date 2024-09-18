@@ -15,6 +15,7 @@ set(header_files
 	"${include_dir}/modules/module.hpp"
 	"${include_dir}/modules/export.hpp"
 	"${include_dir}/modules/section.hpp"
+	"${include_dir}/modules/object.hpp"
 
 	"${include_dir}/patterns/scanner.hpp"
 	"${include_dir}/patterns/pattern.hpp"
@@ -46,15 +47,29 @@ target_link_libraries(wincpp INTERFACE _wincpp_core)
 # Add the source files to the project
 target_sources(wincpp PRIVATE 	
 	"process.cpp"
-
 	"module_factory.cpp"
+	"memory_factory.cpp"
+
+	"memory/pointer.cpp"
+	"memory/region.cpp"
+	"memory/protection.cpp"
+	"memory/protection_operation.cpp"
+	"memory/memory.cpp"
+
+	"modules/module.cpp"
+	"modules/export.cpp"
+	"modules/section.cpp"
+	"modules/object.cpp"
+
+	"patterns/scanner.cpp"
+	"patterns/pattern.cpp"
 
 	"core/win.cpp"
 	"core/error.cpp"
 	"core/snapshot.cpp"
 	
 	"core/errors/win32.cpp"
- "modules/module.cpp" "memory_factory.cpp" "memory/pointer.cpp" "memory/region.cpp" "memory/protection.cpp" "modules/export.cpp" "memory/protection_operation.cpp" "modules/section.cpp"  "patterns/scanner.cpp" "patterns/pattern.cpp")
+ )
 
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})

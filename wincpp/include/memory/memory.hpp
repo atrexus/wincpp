@@ -84,9 +84,14 @@ namespace wincpp::memory
         template< typename T >
         inline void write( std::uintptr_t address, T value ) const;
 
-       protected:
+        /// <summary>
+        /// Gets the regions of the memory object.
+        /// </summary>
+        memory::region_list regions() const;
+
         memory_factory factory;
 
+       private:
         std::uintptr_t _address;
         std::size_t _size;
     };
