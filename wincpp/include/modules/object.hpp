@@ -27,7 +27,7 @@ namespace wincpp::modules
             /// <summary>
             /// The mangled name of the type.
             /// </summary>
-            char name[];
+            std::string name;
         };
 
         struct complete_object_locator_t
@@ -62,7 +62,30 @@ namespace wincpp::modules
             /// </summary>
             std::int32_t self_offset;
         };
-    }
+
+        struct class_heirarchy_descriptor_t
+        {
+            /// <summary>
+            /// The signature of the class heirarchy descriptor.
+            /// </summary>
+            std::uint32_t signature;
+
+            /// <summary>
+            /// The attributes of the class heirarchy descriptor.
+            /// </summary>
+            std::uint32_t attributes;
+
+            /// <summary>
+            /// The number of base classes.
+            /// </summary>
+            std::uint32_t num_base_classes;
+
+            /// <summary>
+            /// The image base relative offset to the base classes array.
+            /// </summary>
+            std::uintptr_t base_classes_offset;
+        };
+    }  // namespace rtti
 
     /// <summary>
     /// Represents an object (class/struct) in the module.
@@ -70,6 +93,34 @@ namespace wincpp::modules
     struct module_t::object_t final
     {
         friend struct module_t;
+
+        /// <summary>
+        /// Gets the type descriptor of the object. This is the RTTI information.
+        /// </summary>
+        rtti::type_descriptor_t type_descriptor() const noexcept;
+
+        /// <summary>
+        /// Gets the demangled name of the object.
+        /// </summary>
+        std::string name() const noexcept;
+
+        /// <summary>
+        /// Gets the address of the vtable.
+        /// </summary>
+        std::uintptr_t vtable() const noexcept;
+
+       private:
+        module_t mod;
+        std::uintptr_t vtable_address;
+        rtti::complete_object_locator_t col;
+
+        /// <summary>
+        /// Creates a new object object.
+        /// </summary>
+        /// <param name="module">The module object.</param>
+        /// <param name="vtable_address">The address of the vtable.</param>
+        /// <param name="col">The complete object locator.</param>
+        explicit object_t( const module_t& module, std::uintptr_t vtable_address, const rtti::complete_object_locator_t &col ) noexcept;
     };
 
 }  // namespace wincpp::modules

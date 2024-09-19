@@ -2,6 +2,15 @@
 
 #include "memory_factory.hpp"
 
+namespace wincpp::patterns
+{
+    /// <summary>
+    /// Forward declaration of the scanner class.
+    /// </summary>
+    class scanner;
+}  // namespace wincpp::patterns
+
+
 namespace wincpp::memory
 {
     /// <summary>
@@ -16,12 +25,7 @@ namespace wincpp::memory
         /// <param name="mem">The process's memory factory.</param>
         /// <param name="address">The address of the memory object.</param>
         /// <param name="size">The size of the memory object.</param>
-        explicit memory_t( const memory_factory& mem, std::uintptr_t address, std::size_t size ) noexcept
-            : factory( mem ),
-              _address( address ),
-              _size( size )
-        {
-        }
+        explicit memory_t( const memory_factory& mem, std::uintptr_t address, std::size_t size ) noexcept;
 
         // This forces the structure to be abstract.
         virtual ~memory_t() = default;
@@ -88,6 +92,11 @@ namespace wincpp::memory
         /// Gets the regions of the memory object.
         /// </summary>
         memory::region_list regions() const;
+
+        /// <summary>
+        /// Gets the scanner instance for the current memory object.
+        /// </summary>
+        patterns::scanner scanner() const;
 
         memory_factory factory;
 

@@ -94,21 +94,25 @@ namespace wincpp::modules
     {
         std::vector< std::shared_ptr< module_t::object_t > > objects;
 
-        const auto &scanner = patterns::scanner( *this );
+        // Get the sections that we need for location.
+        const auto &data = fetch_section( ".data" );
+        const auto &rdata = fetch_section( ".rdata" );
 
-        const auto result = scanner.find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( mangled ) );
+        if ( !data || !rdata )
+            return {};
+
+        const auto result = data->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( mangled ) );
 
         if ( !result )
             return {};
 
         // Calculate the type descriptor address based on the match for the string.
-        const auto type_descriptor_address = *result - sizeof( rtti::type_descriptor_t );
+        const auto type_descriptor_address = *result - sizeof( std::uintptr_t ) * 2;
         const auto type_descriptor_rva = static_cast< std::int32_t >( type_descriptor_address - address() );
 
         // Find all cross references to the type descriptor in the .rdata section.
-        const auto rdata_scanner = patterns::scanner( *fetch_section( ".rdata" ) );
         const auto cross_references =
-            rdata_scanner.find_all< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( type_descriptor_rva ) );
+            rdata->scanner().find_all< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( type_descriptor_rva ) );
 
         for ( const auto &reference : cross_references )
         {
@@ -120,7 +124,14 @@ namespace wincpp::modules
             if ( col.signature != 1 )
                 continue;
 
-            std::printf( "Found COL at 0x%08X\n", (int)col_address );
+            // Now we know that we've located a valid object. Now we need to locate the vtable address associated with the current complete object
+            // locator.
+            const auto vtable_address = rdata->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( col_address ) );
+
+            if ( !vtable_address )
+                continue;
+
+            objects.emplace_back( new module_t::object_t( *this, *vtable_address, col ) );
         }
 
         return objects;

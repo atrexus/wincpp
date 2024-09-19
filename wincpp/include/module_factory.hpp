@@ -66,3 +66,4 @@ namespace wincpp
 #include "modules/module.hpp"
 #include "modules/export.hpp"
 #include "modules/section.hpp"
+#include "modules/object.hpp"

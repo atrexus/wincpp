@@ -94,12 +94,6 @@ namespace wincpp::patterns
             p.mask[ i ] = true;
         }
 
-        // print the pattern
-        for (int i = 0; i < p.size; ++i)
-        {
-            printf( "%02X ", p.bytes[ i ] );
-        }
-
         return p;
     }
 

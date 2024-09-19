@@ -2,7 +2,6 @@
 
 #include "module.hpp"
 #include "memory/memory.hpp"
-#include "patterns/scanner.hpp"
 
 namespace wincpp::modules
 {

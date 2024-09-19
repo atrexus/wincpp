@@ -21,7 +21,20 @@ int main()
 
         const auto& main_module = process->module_factory.main_module();
 
-        const auto objects = main_module.fetch_objects( ".?AVDataModel@RBX@@" );
+        const auto start = std::chrono::high_resolution_clock::now();
+
+        const auto objects = main_module.fetch_objects( ".?AVScriptContext@RBX@@" );
+
+        const auto end = std::chrono::high_resolution_clock::now();
+
+        std::cout << "Found " << objects.size() << " objects in " << std::chrono::duration_cast< std::chrono::milliseconds >( end - start ).count() << "ms"
+                  << std::endl;
+
+        // Display the objects.
+        for ( const auto& object : objects )
+        {
+            std::cout << object->name() << "<" << std::hex << object->vtable() << ">" << std::endl;
+        }
     }
     catch ( const std::system_error& e )
     {
