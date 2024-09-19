@@ -16,4 +16,4 @@ FetchContent_MakeAvailable (wincpp)
 target_link_libraries(your_project PRIVATE wincpp)
 ```
 ## Documentation
-To get started with Wincpp, check out the offcial [Wiki](https://github.com/atrexus/wincpp/wiki) of this GitHub repository. It contains detailed documentation for the different interfaces and simple tutorials to help you get started.
+To get started, check out the offcial [Wiki](https://github.com/atrexus/wincpp/wiki) of this GitHub repository. It contains detailed documentation for the different interfaces and simple tutorials to help you get started.
