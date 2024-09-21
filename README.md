@@ -2,7 +2,7 @@
 A fully featured x64 Win32 wrapper written in modern C++. Wincpp's goal is to provide a simple and easy to use C++ interface for communicating with the Windows OS. This project is still in early development so expect frequent changes to the main branch.
 
 ## Installation
-This is a [CMake](https://cmake.org/) project, so we've created a convenient interface for installing it using [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html). If you aren't using CMake, you can download any of the prebuilt static binaries from any of the latest releases.
+This is a [CMake](https://cmake.org/) project, so we've created a convenient interface for installing it using [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html). If you aren't using CMake, you can download the prebuilt static binaries from any of the latest releases.
 
 If you are using CMake, simply add the following lines to your `CMakeLists.txt` file:
 ```cmake
