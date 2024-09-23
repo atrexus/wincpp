@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include "memory/region.hpp"
@@ -57,7 +58,7 @@ namespace wincpp::patterns
         /// <param name="size">The size of the buffer in bytes.</param>
         /// <returns>A value greater than or equal to zero if success.</returns>
         template< algorithm_t algorithm >
-        static std::int64_t index_of( const pattern_t& pattern, std::uint8_t* data, std::size_t size ) noexcept;
+        static std::int64_t index_of( const pattern_t& pattern, const std::span< std::uint8_t >& span ) noexcept;
 
         /// <summary>
         /// Find the index of the pattern in the buffer.
@@ -92,24 +93,28 @@ namespace wincpp::patterns
     /// The naive algorithm for scanning.
     /// </summary>
     template<>
-    static std::int64_t scanner::index_of< scanner::algorithm_t::naive_t >( const pattern_t& pattern, std::uint8_t* data, std::size_t size ) noexcept;
+    static std::int64_t scanner::index_of< scanner::algorithm_t::naive_t >(
+        const pattern_t& pattern,
+        const std::span< std::uint8_t >& bytes ) noexcept;
 
     /// <summary>
     /// The Boyer-Moore-Horspool algorithm for scanning.
     /// </summary>
     template<>
-    static std::int64_t scanner::index_of< scanner::algorithm_t::bmh_t >( const pattern_t& pattern, std::uint8_t* data, std::size_t size ) noexcept;
+    static std::int64_t scanner::index_of< scanner::algorithm_t::bmh_t >( const pattern_t& pattern, const std::span< std::uint8_t >& bytes ) noexcept;
 
     /// <summary>
     /// The Raita algorithm for scanning.
     /// </summary>
     template<>
-    static std::int64_t scanner::index_of< scanner::algorithm_t::raita_t >( const pattern_t& pattern, std::uint8_t* data, std::size_t size ) noexcept;
+    static std::int64_t scanner::index_of< scanner::algorithm_t::raita_t >(
+        const pattern_t& pattern,
+        const std::span< std::uint8_t >& bytes ) noexcept;
 
     template< scanner::algorithm_t algorithm >
     inline static std::int64_t scanner::index_of( const pattern_t& pattern, std::uint8_t* begin, std::uint8_t* end ) noexcept
     {
-        return scanner::index_of< algorithm >( pattern, begin, end - begin );
+        return scanner::index_of< algorithm >( pattern, std::span< std::uint8_t >( begin, end - begin ) );
     }
 
     template< scanner::algorithm_t algorithm >
@@ -125,7 +130,7 @@ namespace wincpp::patterns
 
             const auto buffer = region.read( region.address(), region.size() );
 
-            const auto result = scanner::index_of< algorithm >( pattern, buffer.get(), region.size() );
+            const auto result = scanner::index_of< algorithm >( pattern, { buffer.get(), region.size() } );
 
             if ( result != -1 )
                 return region.address() + result;
@@ -152,7 +157,7 @@ namespace wincpp::patterns
             const auto begin = buffer.get();
             const auto end = begin + region.size();
 
-            for ( auto it = begin; it != end;)
+            for ( auto it = begin; it != end; )
             {
                 const auto index = scanner::index_of< algorithm >( pattern, it, end );
 

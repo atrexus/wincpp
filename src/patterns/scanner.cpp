@@ -9,12 +9,11 @@ namespace wincpp::patterns
     }
 
     template<>
-    static std::int64_t
-    scanner::index_of< scanner::algorithm_t::naive_t >( const pattern_t& pattern, std::uint8_t* buffer, std::size_t size ) noexcept
+    static std::int64_t scanner::index_of< scanner::algorithm_t::naive_t >(
+        const pattern_t& pattern,
+        const std::span< std::uint8_t >& buffer ) noexcept
     {
-        const auto begin = buffer;
-
-        for ( auto it = begin; it != ( begin + size ); ++it )
+        for ( auto it = buffer.cbegin(); it != buffer.cend(); ++it )
         {
             for ( auto i = 0; i < pattern.size; ++i )
             {
@@ -22,7 +21,7 @@ namespace wincpp::patterns
                     break;
 
                 if ( i == pattern.size - 1 )
-                    return static_cast< std::int64_t >( it - begin );
+                    return static_cast< std::int64_t >( it - buffer.cbegin() );
             }
         }
 
@@ -30,10 +29,9 @@ namespace wincpp::patterns
     }
 
     template<>
-    static std::int64_t
-    scanner::index_of< scanner::algorithm_t::bmh_t >( const pattern_t& pattern, std::uint8_t* buffer, std::size_t buffer_size ) noexcept
+    static std::int64_t scanner::index_of< scanner::algorithm_t::bmh_t >( const pattern_t& pattern, const std::span< std::uint8_t >& buffer ) noexcept
     {
-        if ( pattern.size == 0 || buffer_size == 0 || pattern.size > buffer_size )
+        if ( pattern.size == 0 || buffer.size() == 0 || pattern.size > buffer.size() )
         {
             return -1;
         }
@@ -55,7 +53,7 @@ namespace wincpp::patterns
         // Perform the search
         std::int64_t buffer_idx = 0;
 
-        while ( buffer_idx <= static_cast< std::int64_t >( buffer_size - pattern.size ) )
+        while ( buffer_idx <= static_cast< std::int64_t >( buffer.size() - pattern.size ) )
         {
             std::int64_t pattern_idx = pattern.size - 1;
 
@@ -83,10 +81,11 @@ namespace wincpp::patterns
     }
 
     template<>
-    static std::int64_t
-    scanner::index_of< scanner::algorithm_t::raita_t >( const pattern_t& pattern, std::uint8_t* buffer, std::size_t buffer_size ) noexcept
+    static std::int64_t scanner::index_of< scanner::algorithm_t::raita_t >(
+        const pattern_t& pattern,
+        const std::span< std::uint8_t >& buffer ) noexcept
     {
-        if ( pattern.size == 0 || buffer_size == 0 || pattern.size > buffer_size )
+        if ( pattern.size == 0 || buffer.size() == 0 || pattern.size > buffer.size() )
         {
             return -1;
         }
@@ -109,7 +108,7 @@ namespace wincpp::patterns
 
         std::int64_t buffer_idx = 0;
 
-        while ( buffer_idx <= static_cast< std::int64_t >( buffer_size - pattern.size ) )
+        while ( buffer_idx <= static_cast< std::int64_t >( buffer.size() - pattern.size ) )
         {
             // Check the last byte first
             if ( !pattern.mask[ last_idx ] || pattern.bytes[ last_idx ] == buffer[ buffer_idx + last_idx ] )

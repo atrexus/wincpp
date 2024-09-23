@@ -23,7 +23,7 @@ int main()
 
         const auto start = std::chrono::high_resolution_clock::now();
 
-        const auto objects = main_module.fetch_objects( ".?AVScriptContext@RBX@@" );
+        const auto objects = main_module.fetch_objects( ".?AVDataModel@RBX@@" );
 
         const auto end = std::chrono::high_resolution_clock::now();
 
