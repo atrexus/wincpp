@@ -5,6 +5,7 @@ set(header_files
 	"${include_dir}/process.hpp"
 	"${include_dir}/module_factory.hpp"
 	"${include_dir}/memory_factory.hpp"
+	"${include_dir}/window_factory.hpp"
 
 	"${include_dir}/memory/memory.hpp"
 	"${include_dir}/memory/pointer.hpp"
@@ -19,6 +20,8 @@ set(header_files
 
 	"${include_dir}/patterns/scanner.hpp"
 	"${include_dir}/patterns/pattern.hpp"
+
+	"${include_dir}/windows/window.hpp"
 
 	"${include_dir}/core/win.hpp"
 	"${include_dir}/core/error.hpp"
@@ -49,6 +52,7 @@ target_sources(wincpp PRIVATE
 	"process.cpp"
 	"module_factory.cpp"
 	"memory_factory.cpp"
+	"window_factory.cpp"
 
 	"memory/pointer.cpp"
 	"memory/region.cpp"
@@ -64,12 +68,14 @@ target_sources(wincpp PRIVATE
 	"patterns/scanner.cpp"
 	"patterns/pattern.cpp"
 
+	"windows/window.cpp"
+
 	"core/win.cpp"
 	"core/error.cpp"
 	"core/snapshot.cpp"
 	
 	"core/errors/win32.cpp"
- )
+)
 
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})

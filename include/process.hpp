@@ -4,6 +4,7 @@
 
 #include "memory_factory.hpp"
 #include "module_factory.hpp"
+#include "window_factory.hpp"
 
 namespace wincpp
 {
@@ -14,6 +15,7 @@ namespace wincpp
     {
         friend class memory_factory;
         friend class module_factory;
+        friend class window_factory;
 
         /// <summary>
         /// Opens a process by its name.
@@ -45,6 +47,11 @@ namespace wincpp
         /// The memory factory object.
         /// </summary>
         memory_factory memory_factory;
+
+        /// <summary>
+        /// The window factory object.
+        /// </summary>
+        window_factory window_factory;
 
         /// <summary>
         /// Gets the process id.

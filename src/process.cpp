@@ -1,10 +1,9 @@
 #include "process.hpp"
-#include "process.hpp"
-#include "process.hpp"
 
 #include <psapi.h>
 
 #include "core/snapshot.hpp"
+#include "process.hpp"
 
 namespace wincpp
 {
@@ -62,7 +61,8 @@ namespace wincpp
         : handle( handle ),
           entry( entry ),
           module_factory( this ),
-          memory_factory( this, type )
+          memory_factory( this, type ),
+          window_factory( this )
     {
     }
 

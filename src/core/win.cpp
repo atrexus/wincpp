@@ -23,4 +23,12 @@ namespace wincpp::core
 
         delete handle;
     }
+
+    rectangle_t::rectangle_t( const RECT& rect ) noexcept : left( rect.left ), top( rect.top ), right( rect.right ), bottom( rect.bottom )
+    {
+    }
+
+    point_t::point_t( const POINT& point ) noexcept : x( point.x ), y( point.y )
+    {
+    }
 }  // namespace wincpp::core

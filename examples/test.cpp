@@ -19,21 +19,31 @@ int main()
             return 1;
         }
 
-        const auto& main_module = process->module_factory.main_module();
+        // const auto& main_module = process->module_factory.main_module();
 
-        const auto start = std::chrono::high_resolution_clock::now();
+        // const auto start = std::chrono::high_resolution_clock::now();
 
-        const auto objects = main_module.fetch_objects( ".?AVDataModel@RBX@@" );
+        // const auto objects = main_module.fetch_objects( ".?AVDataModel@RBX@@" );
 
-        const auto end = std::chrono::high_resolution_clock::now();
+        // const auto end = std::chrono::high_resolution_clock::now();
 
-        std::cout << "Found " << objects.size() << " objects in " << std::chrono::duration_cast< std::chrono::milliseconds >( end - start ).count() << "ms"
-                  << std::endl;
+        // std::cout << "Found " << objects.size() << " objects in " << std::chrono::duration_cast< std::chrono::milliseconds >( end - start ).count()
+        // << "ms"
+        //           << std::endl;
 
-        // Display the objects.
-        for ( const auto& object : objects )
+        //// Display the objects.
+        // for ( const auto& object : objects )
+        //{
+        //     std::cout << object->name() << "<" << std::hex << object->vtable() << ">" << std::endl;
+        // }
+
+        const auto& main_window = process->window_factory.main_window();
+
+        if ( main_window )
         {
-            std::cout << object->name() << "<" << std::hex << object->vtable() << ">" << std::endl;
+            std::cout << "Found main window: " << main_window->class_name() << std::endl;
+
+            const auto& placement = main_window->placement();
         }
     }
     catch ( const std::system_error& e )
