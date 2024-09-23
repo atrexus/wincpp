@@ -12,7 +12,7 @@ include (FetchContent) # if you don't have this already
 FetchContent_Declare (wincpp URL https://github.com/atrexus/wincpp/releases/latest/download/wincpp-src.zip)
 FetchContent_MakeAvailable (wincpp)
 
-# Link the SDK into your project
+# Link the library into your project
 target_link_libraries(your_project PRIVATE wincpp)
 ```
 ## Documentation
