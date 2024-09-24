@@ -126,12 +126,12 @@ namespace wincpp::modules
 
             // Now we know that we've located a valid object. Now we need to locate the vtable address associated with the current complete object
             // locator.
-            const auto vtable_address = rdata->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( col_address ) );
+            const auto col_reference = rdata->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( col_address ) );
 
-            if ( !vtable_address )
+            if ( !col_reference )
                 continue;
 
-            objects.emplace_back( new module_t::object_t( *this, *vtable_address, col ) );
+            objects.emplace_back( new module_t::object_t( *this, *col_reference + sizeof( std::uintptr_t ), col ) );
         }
 
         return objects;

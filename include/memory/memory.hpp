@@ -10,7 +10,6 @@ namespace wincpp::patterns
     class scanner;
 }  // namespace wincpp::patterns
 
-
 namespace wincpp::memory
 {
     /// <summary>
