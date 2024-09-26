@@ -2,8 +2,8 @@
 #include <iostream>
 #include <thread>
 
-#include "patterns/scanner.hpp"
-#include "process.hpp"
+#include <wincpp/patterns/scanner.hpp>
+#include <wincpp/process.hpp>
 
 using namespace wincpp;
 
@@ -37,13 +37,15 @@ int main()
         //     std::cout << object->name() << "<" << std::hex << object->vtable() << ">" << std::endl;
         // }
 
-        const auto& main_window = process->window_factory.main_window();
-
-        if ( main_window )
+        // Get the first memory region and print its working set information
+        for ( const auto& region : process->memory_factory.regions() )
         {
-            std::cout << "Found main window: " << main_window->class_name() << std::endl;
+            const auto info = region.working_set_information();
 
-            const auto& placement = main_window->placement();
+            std::cout << "Virtual Address: " << std::hex << info.virtual_address << std::endl;
+            std::cout << "\tValid: " << info.valid << std::endl;
+            std::cout << "\tShare Count: " << info.share_count << std::endl;
+            std::cout << "\tProtection: " << info.protection << std::endl;
         }
     }
     catch ( const std::system_error& e )

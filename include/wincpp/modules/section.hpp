@@ -1,7 +1,7 @@
 #pragma once
 
 #include "module.hpp"
-#include "memory/memory.hpp"
+#include "wincpp/memory/memory.hpp"
 
 namespace wincpp::modules
 {

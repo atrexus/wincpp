@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "memory_factory.hpp"
+#include "memory.hpp"
 
 namespace wincpp::memory
 {
@@ -10,7 +10,7 @@ namespace wincpp::memory
     /// A class representing a pointer in the memory of the remote process.
     /// </summary>
     template< typename T >
-    struct pointer_t final
+    struct pointer_t : public memory_t
     {
         /// <summary>
         /// A class representing a value in the memory of the remote process.
@@ -110,14 +110,16 @@ namespace wincpp::memory
         /// </summary>
         /// <param name="address">The address of the pointer.</param>
         /// <param name="factory">The process's memory factory.</param>
-        explicit pointer_t( const std::uintptr_t address, const memory_factory &factory ) noexcept : value( address, factory )
+        explicit pointer_t( const std::uintptr_t address, const memory_factory &factory ) noexcept
+            : memory_t( factory, address, sizeof( T ) ),
+              value( address, factory )
         {
         }
 
         template< typename U >
         inline operator pointer_t< U >() const
         {
-            return pointer_t< U >( value.address, value.process );
+            return pointer_t< U >( value.address, value.factory );
         }
 
         /// <summary>
@@ -148,7 +150,7 @@ namespace wincpp::memory
         {
             if ( value.address != 0 )
             {
-                for ( const auto &region : value.memory_factory.regions() )
+                for ( const auto &region : value.factory.regions() )
                 {
                     if ( region.contains( value.address ) )
                     {

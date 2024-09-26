@@ -1,4 +1,4 @@
-#include "core/snapshot.hpp"
+#include "wincpp/core/snapshot.hpp"
 
 namespace wincpp::core
 {

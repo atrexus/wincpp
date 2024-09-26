@@ -1,7 +1,7 @@
 #pragma once
 
-#include "memory/memory.hpp"
-#include "memory/protection_operation.hpp"
+#include "wincpp/memory/memory.hpp"
+#include "wincpp/memory/protection_operation.hpp"
 
 namespace wincpp::memory
 {

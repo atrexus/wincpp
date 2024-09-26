@@ -1,8 +1,8 @@
 #pragma once
 
 // clang-format off
-#include "core/snapshot.hpp"
-#include "memory/memory.hpp"
+#include "wincpp/core/snapshot.hpp"
+#include "wincpp/memory/memory.hpp"
 // clang-format on
 
 #include <Psapi.h>

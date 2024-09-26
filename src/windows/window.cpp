@@ -1,6 +1,6 @@
-#include "windows/window.hpp"
+#include "wincpp/windows/window.hpp"
 
-#include "core/error.hpp"
+#include "wincpp/core/error.hpp"
 
 namespace wincpp::windows
 {

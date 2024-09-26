@@ -1,7 +1,7 @@
-#include "memory/region.hpp"
+#include "wincpp/memory/region.hpp"
 
-#include "core/error.hpp"
-#include "process.hpp"
+#include "wincpp/core/error.hpp"
+#include "wincpp/process.hpp"
 
 namespace wincpp::memory
 {

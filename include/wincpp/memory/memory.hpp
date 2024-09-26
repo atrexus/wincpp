@@ -1,6 +1,10 @@
 #pragma once
 
-#include "memory_factory.hpp"
+// clang-format off
+#include "wincpp/memory_factory.hpp"
+// clang-format on
+
+#include <Psapi.h>
 
 namespace wincpp::patterns
 {
@@ -12,6 +16,38 @@ namespace wincpp::patterns
 
 namespace wincpp::memory
 {
+    /// <summary>
+    /// Contains extended working set information for a page.
+    /// </summary>
+    struct working_set_information_t
+    {
+        /// <summary>
+        /// Creates a new working set information object.
+        /// </summary>
+        /// <param name="info">The working set information.</param>
+        working_set_information_t( const PSAPI_WORKING_SET_EX_INFORMATION& info ) noexcept;
+
+        /// <summary>
+        /// The virtual address of the page.
+        /// </summary>
+        std::uintptr_t virtual_address;
+
+        /// <summary>
+        /// If true, the page is in the working set list.
+        /// </summary>
+        bool valid;
+
+        /// <summary>
+        /// The number of processes that share the page.
+        /// </summary>
+        std::size_t share_count;
+
+        /// <summary>
+        /// The memory protection attributes of the page.
+        /// </summary>
+        protection_flags_t protection;
+    };
+
     /// <summary>
     /// An abstract structure representing a memory object. These object can read and write memory, allocate and free memory, and perform other memory
     /// operations.
@@ -32,18 +68,12 @@ namespace wincpp::memory
         /// <summary>
         /// Gets the address of the memory object.
         /// </summary>
-        constexpr std::uintptr_t address() const noexcept
-        {
-            return _address;
-        }
+        constexpr std::uintptr_t address() const noexcept;
 
         /// <summary>
         /// Gets the size of the memory object.
         /// </summary>
-        constexpr std::size_t size() const noexcept
-        {
-            return _size;
-        }
+        constexpr std::size_t size() const noexcept;
 
         /// <summary>
         /// Determines if the object contains the specified address.
@@ -51,6 +81,11 @@ namespace wincpp::memory
         /// <param name="address">The address to check.</param>
         /// <returns>True if the region contains the address, false otherwise.</returns>
         constexpr bool contains( std::uintptr_t address ) const noexcept;
+
+        /// <summary>
+        /// Queries the working set information for the memory object. It will return information about the page that contains the address.
+        /// </summary>
+        working_set_information_t working_set_information() const;
 
         /// <summary>
         /// Reads memory from the process.
@@ -103,6 +138,16 @@ namespace wincpp::memory
         std::uintptr_t _address;
         std::size_t _size;
     };
+
+    constexpr std::uintptr_t memory_t::address() const noexcept
+    {
+        return _address;
+    }
+
+    constexpr std::size_t memory_t::size() const noexcept
+    {
+        return _size;
+    }
 
     constexpr bool memory_t::contains( std::uintptr_t address ) const noexcept
     {

@@ -1,6 +1,6 @@
-#include "patterns/scanner.hpp"
+#include "wincpp/patterns/scanner.hpp"
 
-#include "memory/memory.hpp"
+#include "wincpp/memory/memory.hpp"
 
 namespace wincpp::patterns
 {

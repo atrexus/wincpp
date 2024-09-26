@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "core/win.hpp"
+#include "wincpp/core/win.hpp"
 #include "protection.hpp"
 
 namespace wincpp

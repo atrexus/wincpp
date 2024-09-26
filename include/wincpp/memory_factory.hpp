@@ -18,6 +18,11 @@ namespace wincpp::memory
     /// Forward declare the region_list class.
     /// </summary>
     class region_list;
+
+    /// <summary>
+    /// Forward declare the working_set_information_t struct.
+    /// </summary>
+    struct working_set_information_t;
 }  // namespace wincpp::memory
 
 namespace wincpp::modules
@@ -126,6 +131,13 @@ namespace wincpp
         /// <param name="size">The size of the memory to protect.</param>
         /// <param name="new_flags">The new protection flags.</param>
         memory::protection_operation protect( std::uintptr_t address, std::size_t size, memory::protection_flags_t new_flags ) const;
+
+        /// <summary>
+        /// Gets the working set information for the specified address.
+        /// </summary>
+        /// <param name="address">The address to get the working set information for.</param>
+        /// <returns>The working set information.</returns>
+        memory::working_set_information_t working_set_information( std::uintptr_t address ) const;
     };
 
     template< typename T >

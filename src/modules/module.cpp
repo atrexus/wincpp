@@ -1,11 +1,11 @@
-#include "modules/module.hpp"
+#include "wincpp/modules/module.hpp"
 
 #include <algorithm>
 
-#include "modules/object.hpp"
-#include "modules/section.hpp"
-#include "patterns/scanner.hpp"
-#include "process.hpp"
+#include "wincpp/modules/object.hpp"
+#include "wincpp/modules/section.hpp"
+#include "wincpp/patterns/scanner.hpp"
+#include "wincpp/process.hpp"
 
 namespace wincpp::modules
 {

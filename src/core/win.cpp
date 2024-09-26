@@ -1,4 +1,4 @@
-#include "core/win.hpp"
+#include "wincpp/core/win.hpp"
 
 namespace wincpp::core
 {

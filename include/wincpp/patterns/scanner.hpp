@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 
-#include "memory/region.hpp"
+#include "wincpp/memory/region.hpp"
 #include "pattern.hpp"
 
 namespace wincpp::patterns

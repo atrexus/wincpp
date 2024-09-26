@@ -1,6 +1,6 @@
-#include "memory/protection_operation.hpp"
+#include "wincpp/memory/protection_operation.hpp"
 
-#include "process.hpp"
+#include "wincpp/process.hpp"
 
 namespace wincpp::memory
 {

@@ -1,6 +1,6 @@
-#include "modules/section.hpp"
+#include "wincpp/modules/section.hpp"
 
-#include "process.hpp"
+#include "wincpp/process.hpp"
 
 #ifdef max
 #undef max

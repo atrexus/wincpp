@@ -2,31 +2,31 @@ cmake_path(SET include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 # Add the header files to the project
 set(header_files 
-	"${include_dir}/process.hpp"
-	"${include_dir}/module_factory.hpp"
-	"${include_dir}/memory_factory.hpp"
-	"${include_dir}/window_factory.hpp"
+	"${include_dir}/wincpp/process.hpp"
+	"${include_dir}/wincpp/module_factory.hpp"
+	"${include_dir}/wincpp/memory_factory.hpp"
+	"${include_dir}/wincpp/window_factory.hpp"
 
-	"${include_dir}/memory/memory.hpp"
-	"${include_dir}/memory/pointer.hpp"
-	"${include_dir}/memory/region.hpp"
-	"${include_dir}/memory/protection.hpp"
-	"${include_dir}/memory/protection_operation.hpp"
+	"${include_dir}/wincpp/memory/memory.hpp"
+	"${include_dir}/wincpp/memory/pointer.hpp"
+	"${include_dir}/wincpp/memory/region.hpp"
+	"${include_dir}/wincpp/memory/protection.hpp"
+	"${include_dir}/wincpp/memory/protection_operation.hpp"
 
-	"${include_dir}/modules/module.hpp"
-	"${include_dir}/modules/export.hpp"
-	"${include_dir}/modules/section.hpp"
-	"${include_dir}/modules/object.hpp"
+	"${include_dir}/wincpp/modules/module.hpp"
+	"${include_dir}/wincpp/modules/export.hpp"
+	"${include_dir}/wincpp/modules/section.hpp"
+	"${include_dir}/wincpp/modules/object.hpp"
 
-	"${include_dir}/patterns/scanner.hpp"
-	"${include_dir}/patterns/pattern.hpp"
+	"${include_dir}/wincpp/patterns/scanner.hpp"
+	"${include_dir}/wincpp/patterns/pattern.hpp"
 
-	"${include_dir}/windows/window.hpp"
+	"${include_dir}/wincpp/windows/window.hpp"
 
-	"${include_dir}/core/win.hpp"
-	"${include_dir}/core/error.hpp"
-	"${include_dir}/core/snapshot.hpp"
-	"${include_dir}/core/errors/win32.hpp"
+	"${include_dir}/wincpp/core/win.hpp"
+	"${include_dir}/wincpp/core/error.hpp"
+	"${include_dir}/wincpp/core/snapshot.hpp"
+	"${include_dir}/wincpp/core/errors/win32.hpp"
 )
 
 # Add the library to the project

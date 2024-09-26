@@ -1,9 +1,8 @@
-#include "process.hpp"
+#include "wincpp/process.hpp"
 
 #include <psapi.h>
 
-#include "core/snapshot.hpp"
-#include "process.hpp"
+#include "wincpp/core/snapshot.hpp"
 
 namespace wincpp
 {

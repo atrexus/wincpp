@@ -3,7 +3,7 @@
 #include <expected>
 #include <system_error>
 
-#include "core/errors/win32.hpp"
+#include "wincpp/core/errors/win32.hpp"
 
 namespace wincpp::core
 {

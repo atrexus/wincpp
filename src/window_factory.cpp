@@ -1,7 +1,7 @@
-#include "window_factory.hpp"
+#include "wincpp/window_factory.hpp"
 
-#include "process.hpp"
-#include "windows/window.hpp"
+#include "wincpp/process.hpp"
+#include "wincpp/windows/window.hpp"
 
 namespace wincpp
 {

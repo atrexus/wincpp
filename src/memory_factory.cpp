@@ -1,7 +1,7 @@
-#include "memory_factory.hpp"
+#include "wincpp/memory_factory.hpp"
 
-#include "core/error.hpp"
-#include "process.hpp"
+#include "wincpp/core/error.hpp"
+#include "wincpp/process.hpp"
 
 namespace wincpp
 {
@@ -72,5 +72,16 @@ namespace wincpp
             throw core::error::from_win32( GetLastError() );
 
         return memory::protection_operation( new memory::protection_operation_t( address, size, new_flags, old_flags ), p->handle );
+    }
+
+    memory::working_set_information_t memory_factory::working_set_information( std::uintptr_t address ) const
+    {
+        PSAPI_WORKING_SET_EX_INFORMATION info{};
+        info.VirtualAddress = reinterpret_cast< void * >( address );
+
+        if ( !QueryWorkingSetEx( p->handle->native, &info, sizeof( info ) ) )
+            throw core::error::from_win32( GetLastError() );
+
+        return memory::working_set_information_t( info );
     }
 }  // namespace wincpp

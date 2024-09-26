@@ -1,8 +1,8 @@
-#include "module_factory.hpp"
+#include "wincpp/module_factory.hpp"
 
 #include <algorithm>
 
-#include "process.hpp"
+#include "wincpp/process.hpp"
 
 namespace wincpp
 {

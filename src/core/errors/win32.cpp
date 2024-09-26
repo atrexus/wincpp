@@ -1,4 +1,4 @@
-#include "core/errors/win32.hpp"
+#include "wincpp/core/errors/win32.hpp"
 
 #include <Windows.h>
 

@@ -1,4 +1,4 @@
-#include "core/error.hpp"
+#include "wincpp/core/error.hpp"
 
 namespace wincpp::core
 {

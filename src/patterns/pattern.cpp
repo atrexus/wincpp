@@ -1,4 +1,4 @@
-#include "patterns/pattern.hpp"
+#include "wincpp/patterns/pattern.hpp"
 
 #include <sstream>
 #include <string_view>

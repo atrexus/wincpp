@@ -1,4 +1,4 @@
-#include "modules/object.hpp"
+#include "wincpp/modules/object.hpp"
 
 #include <DbgHelp.h>
 
