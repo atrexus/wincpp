@@ -3,6 +3,7 @@
 // clang-format off
 #include "wincpp/core/snapshot.hpp"
 #include "wincpp/memory/memory.hpp"
+#include "wincpp/modules/object.hpp"
 // clang-format on
 
 #include <Psapi.h>
@@ -39,11 +40,6 @@ namespace wincpp::modules
         struct section_t;
 
         /// <summary>
-        /// Represents an object (class/struct) in the module.
-        /// </summary>
-        struct object_t;
-
-        /// <summary>
         /// Gets the name of the module.
         /// </summary>
         std::string name() const noexcept;
@@ -77,7 +73,7 @@ namespace wincpp::modules
         /// </summary>
         /// <param name="mangled">The mangled name.</param>
         /// <returns>A list of objects.</returns>
-        std::vector< std::shared_ptr< object_t > > fetch_objects( const std::string_view mangled ) const;
+        std::vector< std::shared_ptr< rtti::object_t > > fetch_objects( const std::string_view mangled ) const;
 
         /// <summary>
         /// Gets the export by its name.

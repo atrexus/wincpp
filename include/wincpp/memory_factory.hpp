@@ -1,9 +1,13 @@
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
 
 #include "memory/protection_operation.hpp"
+#include "modules/object.hpp"
 
 namespace wincpp::memory
 {
@@ -19,6 +23,8 @@ namespace wincpp::memory
     /// </summary>
     class region_list;
 
+    struct region_t;
+
     /// <summary>
     /// Forward declare the working_set_information_t struct.
     /// </summary>
@@ -31,7 +37,7 @@ namespace wincpp::modules
     /// Forward declare the module_t struct.
     /// </summary>
     struct module_t;
-}
+}  // namespace wincpp::modules
 
 namespace wincpp
 {
@@ -63,7 +69,7 @@ namespace wincpp
 
         constexpr static std::size_t buffer_size = 256;
 
-        process_t *p;
+        process_t* p;
         memory_type type;
 
         /// <summary>
@@ -71,16 +77,21 @@ namespace wincpp
         /// </summary>
         /// <param name="process">The process object.</param>
         /// <param name="type">The memory type.</param>
-        explicit memory_factory( process_t *p, memory_type type ) noexcept;
+        explicit memory_factory( process_t* p, memory_type type ) noexcept;
 
        public:
+        /// <summary>
+        /// The region compare function. Its used to determine if a region should be searched or used.
+        /// </summary>
+        using region_compare = std::function< bool( const memory::region_t& ) >;
+
         /// <summary>
         /// Reads memory from the process.
         /// </summary>
         /// <param name="address">The address to read from.</param>
         /// <param name="size">The size of the memory to read.</param>
         /// <returns>The memory read.</returns>
-        std::shared_ptr< std::uint8_t[] > read( std::uintptr_t address, std::size_t size ) const;
+        std::shared_ptr< std::uint8_t[] > read( std::uintptr_t address, std::size_t size ) const noexcept;
 
         /// <summary>
         /// Reads a value from memory.
@@ -138,18 +149,37 @@ namespace wincpp
         /// <param name="address">The address to get the working set information for.</param>
         /// <returns>The working set information.</returns>
         memory::working_set_information_t working_set_information( std::uintptr_t address ) const;
+
+        /// <summary>
+        /// Find the first instance of the provided object in memory.
+        /// </summary>
+        /// <param name="object">The object to search for.</param>
+        /// <param name="parallelize">Whether to use multiple threads to search.</param>
+        /// <returns>The address of the object.</returns>
+        std::optional< std::uintptr_t > find_instance_of( const std::shared_ptr< modules::rtti::object_t >& object, bool parallelize = false ) const;
+
+        /// <summary>
+        /// Find the first instance of the provided object in memory.
+        /// </summary>
+        /// <param name="object">The object to search for.</param>
+        /// <param name="compare">An optional comparison function. If the region already matches the default criteria and `compare` returns true, the
+        /// region is searched.</param>
+        /// <param name="parallelize">Whether to use multiple threads to search.</param>
+        /// <returns>The address of the object.</returns>
+        std::optional< std::uintptr_t >
+        find_instance_of( const std::shared_ptr< modules::rtti::object_t >& object, const region_compare& compare, bool parallelize = false ) const;
     };
 
     template< typename T >
     inline T memory_factory::read( std::uintptr_t address ) const
     {
-        return *reinterpret_cast< T * >( read( address, sizeof( T ) ).get() );
+        return *reinterpret_cast< T* >( read( address, sizeof( T ) ).get() );
     }
 
     template<>
     inline std::string memory_factory::read< std::string >( std::uintptr_t address ) const
     {
-        return std::string( reinterpret_cast< const char * >( read( address, buffer_size ).get() ) );
+        return std::string( reinterpret_cast< const char* >( read( address, buffer_size ).get() ) );
     }
 
     template< typename T >

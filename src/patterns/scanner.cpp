@@ -2,12 +2,11 @@
 
 #include "wincpp/memory/memory.hpp"
 
+#undef max
+#undef min
+
 namespace wincpp::patterns
 {
-    scanner::scanner( const memory::memory_t& object ) : object( object )
-    {
-    }
-
     template<>
     static std::int64_t scanner::index_of< scanner::algorithm_t::naive_t >(
         const pattern_t& pattern,
@@ -75,6 +74,73 @@ namespace wincpp::patterns
             // Use the skip table to jump forward
             std::uint8_t last_byte = buffer[ buffer_idx + pattern.size - 1 ];
             buffer_idx += skip_table[ last_byte ];
+        }
+
+        return -1;  // No match found
+    }
+
+    template<>
+    static std::int64_t scanner::index_of< scanner::algorithm_t::tbm_t >( const pattern_t& pattern, const std::span< std::uint8_t >& buffer ) noexcept
+    {
+        if ( pattern.size == 0 || buffer.size() == 0 || pattern.size > buffer.size() )
+        {
+            return -1;
+        }
+
+        // Build the skip table for the Turbo Boyer-Moore algorithm
+        std::size_t skip_table[ 256 ];
+        std::fill( std::begin( skip_table ), std::end( skip_table ), pattern.size );
+
+        for ( std::size_t i = 0; i < pattern.size - 1; ++i )
+        {
+            if ( pattern.mask[ i ] )
+            {
+                skip_table[ pattern.bytes[ i ] ] = pattern.size - 1 - i;
+            }
+        }
+
+        // Variables for turbo shift optimization
+        std::int64_t turbo_shift = 0;
+        std::int64_t shift = 0;
+        std::int64_t j = 0;  // j is the index in the buffer
+
+        // Perform the search
+        while ( j <= static_cast< std::int64_t >( buffer.size() - pattern.size ) )
+        {
+            // Match from the end of the pattern
+            std::int64_t i = pattern.size - 1;
+
+            // Compare the pattern from the end towards the beginning
+            while ( i >= 0 && pattern.bytes[ i ] == buffer[ j + i ] )
+            {
+                --i;
+            }
+
+            if ( i < 0 )
+            {
+                return j;  // Pattern found
+            }
+
+            // Check if we can apply the turbo shift
+            if ( turbo_shift > 0 )
+            {
+                shift = std::max( std::int64_t( 1 ), static_cast< std::int64_t >( skip_table[ buffer[ j + pattern.size - 1 ] ] ) );
+                turbo_shift = 0;  // Reset turbo shift after using it
+            }
+            else
+            {
+                // Otherwise, shift based on the skip table
+                std::uint8_t last_byte = buffer[ j + pattern.size - 1 ];
+                shift = skip_table[ last_byte ];
+
+                // Apply turbo shift if applicable
+                if ( i < pattern.size - 1 )
+                {
+                    turbo_shift = pattern.size - 1 - i;
+                }
+            }
+
+            j += std::max( shift, turbo_shift );  // Move forward by the calculated shift or turbo shift
         }
 
         return -1;  // No match found

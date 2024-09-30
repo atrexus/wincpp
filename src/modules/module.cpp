@@ -90,9 +90,9 @@ namespace wincpp::modules
         return std::nullopt;
     }
 
-    std::vector< std::shared_ptr< module_t::object_t > > module_t::fetch_objects( const std::string_view mangled ) const
+    std::vector< std::shared_ptr< rtti::object_t > > module_t::fetch_objects( const std::string_view mangled ) const
     {
-        std::vector< std::shared_ptr< module_t::object_t > > objects;
+        std::vector< std::shared_ptr< rtti::object_t > > objects;
 
         // Get the sections that we need for location.
         const auto &data = fetch_section( ".data" );
@@ -101,7 +101,7 @@ namespace wincpp::modules
         if ( !data || !rdata )
             return {};
 
-        const auto result = data->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( mangled ) );
+        const auto result = data->find( mangled );
 
         if ( !result )
             return {};
@@ -111,8 +111,7 @@ namespace wincpp::modules
         const auto type_descriptor_rva = static_cast< std::int32_t >( type_descriptor_address - address() );
 
         // Find all cross references to the type descriptor in the .rdata section.
-        const auto cross_references =
-            rdata->scanner().find_all< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( type_descriptor_rva ) );
+        const auto cross_references = rdata->find_all( type_descriptor_rva );
 
         for ( const auto &reference : cross_references )
         {
@@ -126,12 +125,12 @@ namespace wincpp::modules
 
             // Now we know that we've located a valid object. Now we need to locate the vtable address associated with the current complete object
             // locator.
-            const auto col_reference = rdata->scanner().find< patterns::scanner::algorithm_t::bmh_t >( patterns::pattern_t::from( col_address ) );
+            const auto col_reference = rdata->find( col_address );
 
             if ( !col_reference )
                 continue;
 
-            objects.emplace_back( new module_t::object_t( *this, *col_reference + sizeof( std::uintptr_t ), col ) );
+            objects.emplace_back( new rtti::object_t( this, *col_reference + sizeof( std::uintptr_t ), col ) );
         }
 
         return objects;

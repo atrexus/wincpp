@@ -6,16 +6,24 @@
 
 #include <Psapi.h>
 
+#include <optional>
+#include <vector>
+
 namespace wincpp::patterns
 {
     /// <summary>
-    /// Forward declaration of the scanner class.
+    /// Forward declaration of the pattern_t struct.
     /// </summary>
-    class scanner;
+    struct pattern_t;
 }  // namespace wincpp::patterns
 
 namespace wincpp::memory
 {
+    /// <summary>
+    /// The region_t struct.
+    /// </summary>
+    struct region_t;
+
     /// <summary>
     /// Contains extended working set information for a page.
     /// </summary>
@@ -128,13 +136,25 @@ namespace wincpp::memory
         memory::region_list regions() const;
 
         /// <summary>
-        /// Gets the scanner instance for the current memory object.
+        /// Searches for the pattern in the memory object.
         /// </summary>
-        patterns::scanner scanner() const;
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <returns>The relative location.</returns>
+        std::optional< std::uintptr_t > find( const patterns::pattern_t& pattern ) const noexcept;
+
+        /// <summary>
+        /// Searches for all occurrences of the pattern in the memory object.
+        /// </summary>
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <returns>The relative locations.</returns>
+        std::vector< std::uintptr_t > find_all( const patterns::pattern_t& pattern ) const noexcept;
 
         memory_factory factory;
 
        private:
+
+        bool is_valid_region( const memory::region_t& region ) const noexcept;
+
         std::uintptr_t _address;
         std::size_t _size;
     };

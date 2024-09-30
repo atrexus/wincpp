@@ -96,6 +96,9 @@ namespace wincpp::memory
     struct protection_flags_t final
     {
         static const protection_flags_t execute_readwrite;
+        static const protection_flags_t readwrite;
+        static const protection_flags_t noaccess;
+        static const protection_flags_t guard;
 
         /// <summary>
         /// Creates a new protection flags object.

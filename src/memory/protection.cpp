@@ -5,6 +5,9 @@
 namespace wincpp::memory
 {
     const protection_flags_t protection_flags_t::execute_readwrite{ protection_t::execute_readwrite_t };
+    const protection_flags_t protection_flags_t::readwrite{ protection_t::readwrite_t };
+    const protection_flags_t protection_flags_t::noaccess{ protection_t::noaccess_t };
+    const protection_flags_t protection_flags_t::guard{ protection_t::guard_t };
 
     protection_flags_t::protection_flags_t( std::uint32_t flags ) noexcept : flags( flags )
     {
