@@ -16,8 +16,8 @@ namespace wincpp::modules
     {
         GetModuleInformation( factory.p->handle->native, reinterpret_cast< HMODULE >( entry.base_address ), &info, sizeof( info ) );
 
-        // Load the module data into the buffer. We read the first page of the module as that is the maximum size of the headers.
-        buffer = factory.read( entry.base_address, 0x1000 );
+        // Load the module data into the buffer.
+        buffer = factory.read( entry.base_address, info.SizeOfImage );
 
         // Get the DOS header.
         dos_header = reinterpret_cast< const IMAGE_DOS_HEADER * >( buffer.get() );
