@@ -1,5 +1,7 @@
 #include "wincpp/core/snapshot.hpp"
 
+#include <algorithm>
+
 namespace wincpp::core
 {
     static inline void throw_if_fatal()
@@ -114,6 +116,7 @@ namespace wincpp::core
           process_id( entry.th32ProcessID ),
           usage_count( entry.GlblcntUsage )
     {
+        std::transform( name.begin(), name.end(), name.begin(), ::tolower );
     }
 
     snapshot< snapshot_kind::module_t >::iterator::iterator( std::shared_ptr< handle_t > handle ) : handle( handle )

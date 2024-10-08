@@ -19,9 +19,9 @@ int main()
             return 1;
         }
 
-        const auto& wvt = process->module_factory[ "WinTrust" ][ "WinVerifyTrust" ];
+        const auto& k32 = process->module_factory[ "kernel32" ];
 
-        std::cout << wvt << std::endl;
+        std::cout << k32.name() << std::endl;
     }
     catch ( const std::system_error& e )
     {
