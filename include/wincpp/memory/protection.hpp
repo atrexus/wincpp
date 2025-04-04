@@ -119,17 +119,26 @@ namespace wincpp::memory
         /// <summary>
         /// Adds a flag to the protection flags.
         /// </summary>
-        inline void add( protection_t protection ) noexcept;
+        inline void add( protection_t protection ) noexcept
+        {
+            flags |= static_cast< std::uint32_t >( protection );
+        }
 
         /// <summary>
         /// Removes a flag from the protection flags.
         /// </summary>
-        inline void remove( protection_t protection ) noexcept;
+        inline void remove( protection_t protection ) noexcept
+        {
+            flags &= ~static_cast< std::uint32_t >( protection );
+        }
 
         /// <summary>
         /// Checks if the protection flags contain a specific flag.
         /// </summary>
-        inline bool has( protection_t protection ) const noexcept;
+        inline bool has( protection_t protection ) const noexcept
+        {
+            return flags & static_cast< std::uint32_t >( protection );
+        }
 
         /// <summary>
         /// Gets the protection flags.
