@@ -46,7 +46,7 @@ target_include_directories(_wincpp_core SYSTEM INTERFACE
 )
 
 # Add the library to the project
-add_library(wincpp STATIC)
+add_library(wincpp)
 
 # Link the library to the core
 target_link_libraries(wincpp INTERFACE _wincpp_core)
