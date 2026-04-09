@@ -97,7 +97,7 @@ install(TARGETS wincpp _wincpp_core EXPORT wincpp-export
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/wincpp"
 )
 
-install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../include" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/wincpp")
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../include" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake" VERSION 1.5.3.6 COMPATIBILITY AnyNewerVersion)
