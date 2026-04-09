@@ -109,4 +109,4 @@ install(FILES
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wincpp
 )
 
-install(EXPORT wincpp-export FILE wincppTargets.cmake NAMESPACE wincpp:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/wincpp)
+install(EXPORT wincpp-export FILE wincppTargets.cmake NAMESPACE wincpp:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wincpp)
