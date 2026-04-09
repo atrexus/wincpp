@@ -61,7 +61,7 @@ namespace wincpp
             }
             case wincpp::memory_type::remote_t:
             {
-                std::size_t written;
+                SIZE_T written;
 
                 WriteProcessMemory( p->handle->native, reinterpret_cast< void* >( address ), buffer, size, &written );
                 return written;
