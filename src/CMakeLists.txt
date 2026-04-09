@@ -91,7 +91,7 @@ target_include_directories(wincpp PRIVATE ${include_dir})
 
 include(GNUInstallDirs)
 # Install wincpp library
-install(TARGETS wincpp EXPORT wincpp-export
+install(TARGETS wincpp _wincpp_core EXPORT wincpp-export
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
