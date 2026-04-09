@@ -47,6 +47,7 @@ target_include_directories(_wincpp_core SYSTEM INTERFACE
 
 # Add the library to the project
 add_library(wincpp)
+set_target_properties(wincpp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Link the library to the core
 target_link_libraries(wincpp PUBLIC _wincpp_core)
@@ -110,7 +111,6 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake"
     "include(\${CMAKE_CURRENT_LIST_DIR}/wincppTargets.cmake)\n"
 )
 
-# 5. Install Config Files to share/wincpp (The vcpkg standard)
 set(wincpp_CONFFILE_DEST "${CMAKE_INSTALL_DATAROOTDIR}/wincpp")
 
 install(FILES
@@ -119,7 +119,6 @@ install(FILES
     DESTINATION ${wincpp_CONFFILE_DEST}
 )
 
-# 6. Install the Export set
 install(EXPORT wincpp-export 
     FILE wincppTargets.cmake 
     NAMESPACE wincpp:: 
