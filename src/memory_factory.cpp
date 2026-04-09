@@ -24,7 +24,7 @@ namespace wincpp
             }
             case wincpp::memory_type::remote_t:
             {
-                std::size_t read;
+                SIZE_T read;
 
                 if ( !ReadProcessMemory( p->handle->native, reinterpret_cast< void* >( address ), buffer, size, &read ) || read != size )
                     return false;
