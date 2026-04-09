@@ -89,9 +89,12 @@ target_sources(wincpp PRIVATE
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})
 
+# Install wincpp library
 install(TARGETS wincpp EXPORT wincpp
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
