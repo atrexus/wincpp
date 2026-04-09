@@ -89,6 +89,7 @@ target_sources(wincpp PRIVATE
 # Add the include directory to the project
 target_include_directories(wincpp PRIVATE ${include_dir})
 
+include(GNUInstallDirs)
 # Install wincpp library
 install(TARGETS wincpp EXPORT wincpp
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
