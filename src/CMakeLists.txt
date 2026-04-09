@@ -37,7 +37,7 @@ set(header_files
 # Add the library to the project
 add_library(_wincpp_core INTERFACE)
 # Add the include directory to the project
-target_sources(_wincpp_core INTERFACE ${header_files})
+target_sources(_wincpp_core INTERFACE $<BUILD_INTERFACE:${header_files}>)
 
 # Add the include directories
 target_include_directories(_wincpp_core SYSTEM INTERFACE 
