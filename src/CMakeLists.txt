@@ -49,7 +49,7 @@ target_include_directories(_wincpp_core SYSTEM INTERFACE
 add_library(wincpp)
 
 # Link the library to the core
-target_link_libraries(wincpp INTERFACE _wincpp_core)
+target_link_libraries(wincpp PUBLIC _wincpp_core)
 
 # Add the source files to the project
 target_sources(wincpp PRIVATE 	
@@ -94,18 +94,34 @@ install(TARGETS wincpp _wincpp_core EXPORT wincpp-export
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/wincpp"
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../include/wincpp" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 include(CMakePackageConfigHelpers)
-write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake" VERSION 1.5.3.6 COMPATIBILITY AnyNewerVersion)
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake" "include(\${CMAKE_CURRENT_LIST_DIR}/wincppTargets.cmake)\n")
-install(FILES
-	    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake"
-	        "${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake"
-		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wincpp
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake" 
+    VERSION 1.5.3.6 
+    COMPATIBILITY AnyNewerVersion
 )
 
-install(EXPORT wincpp-export FILE wincppTargets.cmake NAMESPACE wincpp:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wincpp)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake" 
+    "include(\${CMAKE_CURRENT_LIST_DIR}/wincppTargets.cmake)\n"
+)
+
+# 5. Install Config Files to share/wincpp (The vcpkg standard)
+set(wincpp_CONFFILE_DEST "${CMAKE_INSTALL_DATAROOTDIR}/wincpp")
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake"
+    DESTINATION ${wincpp_CONFFILE_DEST}
+)
+
+# 6. Install the Export set
+install(EXPORT wincpp-export 
+    FILE wincppTargets.cmake 
+    NAMESPACE wincpp:: 
+    DESTINATION ${wincpp_CONFFILE_DEST}
+)
