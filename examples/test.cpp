@@ -1,10 +1,10 @@
-#include <cstdint>
-#include <cstring>
+#include <algorithm>
 #include <exception>
-#include <iostream>
+#include <print>
+#include <ranges>
+#include <string_view>
 #include <system_error>
-#include <wincpp/patterns/pattern.hpp>
-#include <wincpp/process.hpp>
+#include <wincpp/wincpp.hpp>
 
 using namespace wincpp;
 
@@ -12,46 +12,55 @@ int main()
 {
     try
     {
-        const auto process = process_t::open( "RobloxPlayerBeta.exe" );
+        const auto process = process_t::current();
+        const auto reopened =
+            process_t::try_open( process->id(), core::process_access_t::query_limited_information_t | core::process_access_t::synchronize_t );
 
-        if ( !process )
+        std::println( "current process: {} ({})", process->name(), process->id() );
+        std::println( "limited reopen: {}", reopened ? "success" : reopened.error().what() );
+
+        const auto& modules = process->module_factory.modules( true );
+        const auto& main_module = process->module_factory.main_module();
+
+        std::println( "modules loaded: {}", modules.size() );
+        std::println( "main module: {} @ 0x{:X}", main_module.name(), main_module.address() );
+        std::println( "main module path: {}", main_module.path() );
+
+        std::println( "\nfirst sections:" );
+        for ( const auto& section : main_module.sections() | std::views::take( 5 ) )
         {
-            std::cout << "Failed to open the process.\n";
-            return 1;
+            std::println( "  {:<8} 0x{:X} ({} bytes)", section->name(), section->address(), section->size() );
         }
 
-        const auto& hyp = process->module_factory[ "RobloxPlayerBeta.dll" ];
+        const auto ntdll = process->module_factory.try_fetch_module( "ntdll.dll" );
 
-        // 48 8D 0D ? ? ? ? 48 8D 55 F8 -> lea rcx, [rel data_????????]
-        const auto address = hyp.find( patterns::pattern_t{ "\x48\x8D\x0D\x00\x00\x00\x00\x48\x8D\x55\xF8", "xxx????xxxx" } );
-
-        if ( !address )
+        if ( !ntdll )
         {
-            std::cout << "Failed to find the pattern.\n";
-            return 1;
+            std::println( "\nntdll.dll was not found in the current process." );
+            return 0;
         }
 
-        std::cout << "Found the pattern at: 0x" << std::hex << *address << '\n';
+        const auto& exports = ( *ntdll )->exports();
 
-        const auto instruction = hyp.read( *address, 7 );
+        std::println( "\n{} exports: {}", ( *ntdll )->name(), exports.size() );
 
-        std::int32_t relative_offset{};
-        std::memcpy( &relative_offset, instruction.get() + 3, sizeof( relative_offset ) );
-        const auto data_address = *address + 7 + relative_offset;
+        for ( const auto& exp : exports | std::views::take( 8 ) )
+        {
+            std::println( "  {}", exp->to_string() );
+        }
 
-        std::cout << "The data address is: 0x" << std::hex << data_address << ", 0x" << data_address - hyp.address() << '\n';
-
-        const auto& kernel32 = process->module_factory[ "kernel32.dll" ];
-
-        std::cout << "0x" << kernel32.address() << '\n';
+        const auto nt_close = ( *ntdll )->try_fetch_export( "NtClose" );
+        std::println( "\nNtClose lookup: {}", nt_close ? ( *nt_close )->to_string() : nt_close.error().what() );
     }
     catch ( const std::system_error& e )
     {
-        std::cout << "[-] Error [" << e.code() << "]: " << e.what() << '\n';
+        std::println( "[-] Error [{}]: {}", e.code().value(), e.what() );
+        return 1;
     }
     catch ( const std::exception& e )
     {
-        std::cout << "[-] Error: " << e.what() << '\n';
+        std::println( "[-] Error: {}", e.what() );
+        return 1;
     }
 
     return 0;
