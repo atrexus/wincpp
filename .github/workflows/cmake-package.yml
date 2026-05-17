@@ -70,11 +70,11 @@ jobs:
           $entries = tar -tf $archive | ForEach-Object { $_ -replace '\\', '/' }
           $requiredEntries = @(
               "CMakeLists.txt",
+              "LICENSE",
+              "README.md",
               "include/wincpp/wincpp.hpp",
               "include/wincpp/wincpp.inl",
-              "include/wincpp/detail/win32.hpp",
-              "tests/CMakeLists.txt",
-              "tests/macro_hygiene_tests.cpp"
+              "include/wincpp/detail/win32.hpp"
           )
 
           foreach ($entry in $requiredEntries)
@@ -82,6 +82,21 @@ jobs:
               if ($entries -notcontains $entry)
               {
                   throw "Package archive is missing required entry: $entry"
+              }
+          }
+
+          $forbiddenPrefixes = @(
+              "examples/",
+              "tests/"
+          )
+
+          foreach ($prefix in $forbiddenPrefixes)
+          {
+              $matches = $entries | Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) }
+
+              if ($matches)
+              {
+                  throw "Package archive includes forbidden prefix '$prefix': $($matches[0])"
               }
           }
 

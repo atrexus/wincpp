@@ -48,11 +48,9 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(BUILD_TESTS "whether or not tests should be built" ON)
 
     if(BUILD_PACKAGE)
-        set(package_files include/ examples/ tests/ CMakeLists.txt LICENSE README.md)
+        set(package_files include/ CMakeLists.txt LICENSE README.md)
         file(GLOB_RECURSE package_dependencies CONFIGURE_DEPENDS
             "${CMAKE_CURRENT_SOURCE_DIR}/include/*"
-            "${CMAKE_CURRENT_SOURCE_DIR}/examples/*"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tests/*"
         )
         list(APPEND package_dependencies
             "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
