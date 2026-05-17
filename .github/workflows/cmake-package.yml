@@ -26,7 +26,7 @@ env:
 
 jobs:
   validate:
-    name: Validate Windows build
+    name: Validate MSVC build and package
     runs-on: windows-latest
 
     steps:
@@ -107,11 +107,84 @@ jobs:
           path: build/wincpp-src.zip
           if-no-files-found: error
 
+  clang_cl:
+    name: Validate clang-cl build
+    runs-on: windows-latest
+    env:
+      BUILD_DIR: build-clang-cl
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Locate clang-cl and Visual Studio
+        shell: pwsh
+        run: |
+          $clangCl = (Get-Command clang-cl -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+
+          if (-not $clangCl)
+          {
+              $candidate = "C:\Program Files\LLVM\bin\clang-cl.exe"
+
+              if (Test-Path -LiteralPath $candidate)
+              {
+                  $clangCl = $candidate
+              }
+          }
+
+          if (-not $clangCl)
+          {
+              throw "clang-cl was not found on the runner."
+          }
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          $visualStudioPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+
+          if (-not $visualStudioPath)
+          {
+              throw "Visual Studio with MSVC tools was not found on the runner."
+          }
+
+          $vcvars64 = Join-Path $visualStudioPath "VC\Auxiliary\Build\vcvars64.bat"
+
+          if (-not (Test-Path -LiteralPath $vcvars64))
+          {
+              throw "vcvars64.bat was not found: $vcvars64"
+          }
+
+          "CLANG_CL=$clangCl" >> $env:GITHUB_ENV
+          "VCVARS64=$vcvars64" >> $env:GITHUB_ENV
+
+          & $clangCl --version
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmd /c
+          "call `"$env:VCVARS64`" &&
+          cmake -S . -B `"$env:BUILD_DIR`"
+          -G Ninja
+          -DCMAKE_CXX_COMPILER=`"$env:CLANG_CL`"
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_EXAMPLES=ON
+          -DBUILD_TESTS=ON
+          -DBUILD_PACKAGE=OFF"
+
+      - name: Build
+        shell: pwsh
+        run: cmd /c "call `"$env:VCVARS64`" && cmake --build `"$env:BUILD_DIR`" --parallel"
+
+      - name: Test
+        shell: pwsh
+        run: cmd /c "call `"$env:VCVARS64`" && ctest --test-dir `"$env:BUILD_DIR`" --output-on-failure"
+
   release:
     name: Upload release package
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, clang_cl]
     permissions:
       contents: write
 
