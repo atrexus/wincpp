@@ -1,29 +1,106 @@
-name: Build CMake FetchContent Package
-permissions:
-  contents: write
+name: Build, Test, and Package
 
 on:
+  push:
+  pull_request:
   release:
     types: [published]
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-      - name: Create build environment
-        run: cmake -E make_directory build
+permissions:
+  contents: read
+
+env:
+  BUILD_DIR: build
+
+jobs:
+  validate:
+    name: Validate Windows build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Configure
-        working-directory: build/
-        run: cmake $GITHUB_WORKSPACE
+        shell: pwsh
+        run: >
+          cmake -S . -B $env:BUILD_DIR
+          -G "Visual Studio 17 2022"
+          -A x64
+          -DBUILD_EXAMPLES=ON
+          -DBUILD_TESTS=ON
+          -DBUILD_PACKAGE=ON
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build $env:BUILD_DIR --config Release --parallel
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir $env:BUILD_DIR -C Release --output-on-failure
+
       - name: Package source code
-        working-directory: build/
-        run: cmake --build . --target wincpp_package
+        shell: pwsh
+        run: cmake --build $env:BUILD_DIR --config Release --target wincpp_package
+
+      - name: Validate package contents
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:BUILD_DIR "wincpp-src.zip"
+
+          if (-not (Test-Path -LiteralPath $archive))
+          {
+              throw "Expected package archive was not created: $archive"
+          }
+
+          $entries = tar -tf $archive | ForEach-Object { $_ -replace '\\', '/' }
+          $requiredEntries = @(
+              "CMakeLists.txt",
+              "include/wincpp/wincpp.hpp",
+              "include/wincpp/wincpp.inl",
+              "include/wincpp/detail/win32.hpp",
+              "tests/CMakeLists.txt",
+              "tests/macro_hygiene_tests.cpp"
+          )
+
+          foreach ($entry in $requiredEntries)
+          {
+              if ($entries -notcontains $entry)
+              {
+                  throw "Package archive is missing required entry: $entry"
+              }
+          }
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wincpp-src
+          path: build/wincpp-src.zip
+          if-no-files-found: error
+
+  release:
+    name: Upload release package
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wincpp-src
+          path: release
 
       - name: Add packaged source code to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/wincpp-src.zip
-          tag: ${{ github.ref }}
+          file: release/wincpp-src.zip
+          tag: ${{ github.event.release.tag_name }}
+          overwrite: true

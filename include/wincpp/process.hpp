@@ -1,11 +1,25 @@
 #pragma once
 
-#include <string>
+#include <memory>
+#include <string_view>
 
-#include "memory_factory.hpp"
-#include "module_factory.hpp"
-#include "window_factory.hpp"
-#include "thread_factory.hpp"
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#define WINCPP_SUPPRESS_AUTO_INL
+#define WINCPP_RESTORE_AUTO_INL
+#endif
+
+#include "wincpp/core/error.hpp"
+#include "wincpp/core/snapshot.hpp"
+#include "wincpp/core/win.hpp"
+#include "wincpp/memory_factory.hpp"
+#include "wincpp/module_factory.hpp"
+#include "wincpp/thread_factory.hpp"
+#include "wincpp/window_factory.hpp"
+
+#ifdef WINCPP_RESTORE_AUTO_INL
+#undef WINCPP_SUPPRESS_AUTO_INL
+#undef WINCPP_RESTORE_AUTO_INL
+#endif
 
 namespace wincpp
 {
@@ -25,7 +39,17 @@ namespace wincpp
         /// <param name="name">The name of the process.</param>
         /// <param name="access">The access rights.</param>
         /// <returns>A unique pointer to the process.</returns>
-        static std::unique_ptr< process_t > open( std::string_view name, std::uint32_t access = PROCESS_ALL_ACCESS );
+        static std::unique_ptr< process_t > open( std::string_view name, core::process_access_t access = core::process_access_t::all_t );
+
+        /// <summary>
+        /// Attempts to open a process by its name without throwing an exception.
+        /// </summary>
+        /// <param name="name">The name of the process.</param>
+        /// <param name="access">The access rights.</param>
+        /// <returns>The process when it was opened, or an error describing why it failed.</returns>
+        static core::result_t< std::unique_ptr< process_t > > try_open(
+            std::string_view name,
+            core::process_access_t access = core::process_access_t::all_t ) noexcept;
 
         /// <summary>
         /// Opens a process by its id.
@@ -33,12 +57,29 @@ namespace wincpp
         /// <param name="id">The id of the process.</param>
         /// <param name="access">The access rights.</param>
         /// <returns>A unique pointer to the process.</returns>
-        static std::unique_ptr< process_t > open( std::uint32_t id, std::uint32_t access = PROCESS_ALL_ACCESS );
+        static std::unique_ptr< process_t > open( std::uint32_t id, core::process_access_t access = core::process_access_t::all_t );
+
+        /// <summary>
+        /// Attempts to open a process by its id without throwing an exception.
+        /// </summary>
+        /// <param name="id">The id of the process.</param>
+        /// <param name="access">The access rights.</param>
+        /// <returns>The process when it was opened, or an error describing why it failed.</returns>
+        static core::result_t< std::unique_ptr< process_t > > try_open(
+            std::uint32_t id,
+            core::process_access_t access = core::process_access_t::all_t ) noexcept;
 
         /// <summary>
         /// Gets a handle to the current process.
         /// </summary>
+        /// <returns>The current process.</returns>
         static std::unique_ptr< process_t > current();
+
+        /// <summary>
+        /// Attempts to get a handle to the current process without throwing an exception.
+        /// </summary>
+        /// <returns>The current process when it was created, or an error describing why it failed.</returns>
+        static core::result_t< std::unique_ptr< process_t > > try_current() noexcept;
 
         /// <summary>
         /// The module factory object.
@@ -63,18 +104,14 @@ namespace wincpp
         /// <summary>
         /// Gets the process id.
         /// </summary>
-        constexpr std::uint32_t id() const noexcept
-        {
-            return entry.id;
-        }
+        /// <returns>The process id.</returns>
+        constexpr std::uint32_t id() const noexcept;
 
         /// <summary>
         /// Gets the process name.
         /// </summary>
-        constexpr std::string_view name() const noexcept
-        {
-            return entry.name;
-        }
+        /// <returns>The process name.</returns>
+        constexpr std::string_view name() const noexcept;
 
         /// <summary>
         /// Gets the process handle.
@@ -86,16 +123,33 @@ namespace wincpp
         /// Creates a new process object.
         /// </summary>
         /// <param name="handle">The handle to the process object.</param>
-        /// <param name="id">The process id.</param>
-        /// <param name="name">The process name.</param>
+        /// <param name="entry">The process entry.</param>
         /// <param name="type">The memory type.</param>
         explicit process_t( std::shared_ptr< core::handle_t > handle, const core::process_entry_t& entry, memory_type type ) noexcept;
 
         core::process_entry_t entry;
     };
-
 }  // namespace wincpp
 
-#include "memory/pointer.hpp"
-#include "memory/region.hpp"
-#include "memory/allocation.hpp"
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#define WINCPP_SUPPRESS_AUTO_INL
+#define WINCPP_RESTORE_POST_DECL_AUTO_INL
+#endif
+
+#include "wincpp/memory/allocation.hpp"
+#include "wincpp/memory/pointer.hpp"
+#include "wincpp/memory/region.hpp"
+#include "wincpp/modules/export.hpp"
+#include "wincpp/modules/module.hpp"
+#include "wincpp/modules/section.hpp"
+#include "wincpp/threads/thread.hpp"
+#include "wincpp/windows/window.hpp"
+
+#ifdef WINCPP_RESTORE_POST_DECL_AUTO_INL
+#undef WINCPP_SUPPRESS_AUTO_INL
+#undef WINCPP_RESTORE_POST_DECL_AUTO_INL
+#endif
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/wincpp.inl"
+#endif

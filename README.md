@@ -1,19 +1,24 @@
 # wincpp
-A fully featured x64 Win32 wrapper written in modern C++. Wincpp's goal is to provide a simple and easy to use C++ interface for communicating with the Windows OS. This project is still in early development so expect frequent changes to the main branch.
+
+A lightweight header-only x64 Win32 wrapper written in modern C++23. Wincpp provides a small C++ interface for working with Windows processes,
+modules, memory, threads, and windows while keeping Windows SDK includes isolated behind guarded implementation headers.
 
 ## Installation
-This is a [CMake](https://cmake.org/) project, so we've created a convenient interface for installing it using [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html). If you aren't using CMake, you can download the prebuilt static binaries from any of the latest releases.
 
-If you are using CMake, simply add the following lines to your `CMakeLists.txt` file:
+This is a CMake project and can be consumed with `FetchContent`.
+
 ```cmake
-include (FetchContent) # if you don't have this already
+include(FetchContent)
 
-# Fetch the latest version
-FetchContent_Declare (wincpp URL https://github.com/atrexus/wincpp/releases/latest/download/wincpp-src.zip)
-FetchContent_MakeAvailable (wincpp)
+FetchContent_Declare(wincpp URL https://github.com/atrexus/wincpp/releases/latest/download/wincpp-src.zip)
+FetchContent_MakeAvailable(wincpp)
 
-# Link the library into your project
-target_link_libraries(your_project PRIVATE wincpp)
+target_link_libraries(your_project PRIVATE wincpp::wincpp)
 ```
+
+The library is header-only, so no static or shared library binary is required.
+
 ## Documentation
-To get started, check out the offcial [Wiki](https://github.com/atrexus/wincpp/wiki) of this GitHub repository. It contains detailed documentation for the different interfaces and simple tutorials to help you get started.
+
+To get started, check out the official [Wiki](https://github.com/atrexus/wincpp/wiki) of this GitHub repository. It contains detailed
+documentation for the different interfaces and simple tutorials to help you get started.

@@ -1,139 +1,145 @@
 #pragma once
 
-#include <Windows.h>
-
-#include <bitset>
-#include <limits>
+#include <concepts>
+#include <cstdint>
 #include <ostream>
 
 namespace wincpp::memory
 {
     /// <summary>
-    /// Specifies memory protection constants. These values are used to set the memory protection
-    /// options for a range of memory pages in a process's virtual address space.
+    /// Specifies memory protection constants.
     /// </summary>
     enum class protection_t : std::uint32_t
     {
         /// <summary>
-        /// Disables all access to the committed region of pages. Any attempt to read, write, or execute
-        /// the committed region results in an access violation.
+        /// Disables all access to the committed region of pages.
         /// </summary>
-        noaccess_t = PAGE_NOACCESS,
+        noaccess_t = 0x00000001,
 
         /// <summary>
-        /// Enables read-only access to the committed region of pages. Any attempt to write to the
-        /// committed region results in an access violation. If Data Execution Prevention (DEP) is enabled,
-        /// attempts to execute code in the committed region result in an access violation.
+        /// Enables read-only access to the committed region of pages.
         /// </summary>
-        readonly_t = PAGE_READONLY,
+        readonly_t = 0x00000002,
 
         /// <summary>
-        /// Enables read and write access to the committed region of pages. If DEP is enabled, attempts
-        /// to execute code in the committed region result in an access violation.
+        /// Enables read and write access to the committed region of pages.
         /// </summary>
-        readwrite_t = PAGE_READWRITE,
+        readwrite_t = 0x00000004,
 
         /// <summary>
-        /// Enables copy-on-write access to the committed region of pages. When a process writes to the committed region,
-        /// the system copies the original pages to a new region, and the process receives access to the new region.
+        /// Enables copy-on-write access to the committed region.
         /// </summary>
-        writecopy_t = PAGE_WRITECOPY,
+        writecopy_t = 0x00000008,
 
         /// <summary>
-        /// Enables execute-only access to the committed region of pages. Any attempt to read or write to
-        /// the committed region results in an access violation.
+        /// Enables execute-only access to the committed region.
         /// </summary>
-        execute_t = PAGE_EXECUTE,
+        execute_t = 0x00000010,
 
         /// <summary>
-        /// Enables execute and read access to the committed region of pages. Any attempt to write to the
-        /// committed region results in an access violation.
+        /// Enables execute and read access to the committed region.
         /// </summary>
-        execute_read_t = PAGE_EXECUTE_READ,
+        execute_read_t = 0x00000020,
 
         /// <summary>
-        /// Enables execute, read, and write access to the committed region of pages.
+        /// Enables execute, read, and write access to the committed region.
         /// </summary>
-        execute_readwrite_t = PAGE_EXECUTE_READWRITE,
+        execute_readwrite_t = 0x00000040,
 
         /// <summary>
-        /// Enables execute and copy-on-write access to the committed region of pages.
+        /// Enables execute and copy-on-write access to the committed region.
         /// </summary>
-        execute_writecopy_t = PAGE_EXECUTE_WRITECOPY,
+        execute_writecopy_t = 0x00000080,
 
         /// <summary>
-        /// Marks the committed region of pages as guarded. Any attempt to access a guarded region
-        /// of pages causes the system to raise a guard violation exception.
+        /// Marks the committed region of pages as guarded.
         /// </summary>
-        guard_t = PAGE_GUARD,
+        guard_t = 0x00000100,
 
         /// <summary>
-        /// Disables caching for the committed region of pages.
+        /// Disables caching for the committed region.
         /// </summary>
-        nocache_t = PAGE_NOCACHE,
+        nocache_t = 0x00000200,
 
         /// <summary>
-        /// Enables write-combining optimization for the committed region of pages. This allows for faster
-        /// writes to certain types of memory (such as video memory), but can result in less predictable
-        /// memory ordering.
+        /// Enables write-combining optimization for the committed region.
         /// </summary>
-        writecombine_t = PAGE_WRITECOMBINE,
+        writecombine_t = 0x00000400,
 
         /// <summary>
-        /// Marks the committed region of pages as invalid for control-flow enforcement technology (CET).
-        /// Any attempt to use this memory as a target for indirect control flow (such as function pointers)
-        /// will result in an exception.
+        /// Marks the committed region of pages as invalid for control-flow enforcement technology.
         /// </summary>
-        targets_invalid_t = PAGE_TARGETS_INVALID,
+        targets_invalid_t = 0x40000000,
 
         /// <summary>
-        /// Marks the committed region of pages as non-updateable for CET. This prevents further updates
-        /// to the control flow protection settings of the pages.
+        /// Marks the committed region of pages as non-updateable for control-flow enforcement technology.
         /// </summary>
-        targets_no_update_t = PAGE_TARGETS_NO_UPDATE,
+        targets_no_update_t = 0x40000000
     };
 
+    /// <summary>
+    /// Contains a set of page protection flags.
+    /// </summary>
     struct protection_flags_t final
     {
+        /// <summary>
+        /// Execute, read, and write access.
+        /// </summary>
         static const protection_flags_t execute_readwrite;
+
+        /// <summary>
+        /// Read and write access.
+        /// </summary>
         static const protection_flags_t readwrite;
+
+        /// <summary>
+        /// No access.
+        /// </summary>
         static const protection_flags_t noaccess;
+
+        /// <summary>
+        /// Guarded access.
+        /// </summary>
         static const protection_flags_t guard;
 
         /// <summary>
         /// Creates a new protection flags object.
         /// </summary>
-        /// <param name="flags">The flags to set.</param>
-        protection_flags_t( std::uint32_t flags ) noexcept;
+        /// <param name="flags">The raw flags to set.</param>
+        explicit protection_flags_t( std::uint32_t flags = 0 ) noexcept;
 
         /// <summary>
         /// Creates a new protection flags object.
         /// </summary>
+        /// <typeparam name="Flags">The protection flag types.</typeparam>
         /// <param name="flags">The flags to set.</param>
-        template< typename... Flags, typename = typename std::enable_if_t< ( std::is_same_v< Flags, protection_t > && ... ) > >
-        explicit protection_flags_t( Flags... flags ) noexcept : flags( 0 )
-        {
-            ( add( flags ), ... );
-        }
+        template< typename... Flags >
+            requires( std::same_as< Flags, protection_t > && ... )
+        explicit protection_flags_t( Flags... flags ) noexcept;
 
         /// <summary>
         /// Adds a flag to the protection flags.
         /// </summary>
+        /// <param name="protection">The protection flag to add.</param>
         void add( protection_t protection ) noexcept;
 
         /// <summary>
         /// Removes a flag from the protection flags.
         /// </summary>
+        /// <param name="protection">The protection flag to remove.</param>
         void remove( protection_t protection ) noexcept;
 
         /// <summary>
         /// Checks if the protection flags contain a specific flag.
         /// </summary>
+        /// <param name="protection">The protection flag to check.</param>
+        /// <returns>True if the flag is present.</returns>
         bool has( protection_t protection ) const noexcept;
 
         /// <summary>
-        /// Gets the protection flags.
+        /// Gets the raw protection flags.
         /// </summary>
+        /// <returns>The raw flags.</returns>
         std::uint32_t get() const noexcept;
 
         /// <summary>
@@ -142,17 +148,21 @@ namespace wincpp::memory
         /// <param name="lhs">The left-hand side protection flags.</param>
         /// <param name="rhs">The right-hand side protection flags.</param>
         /// <returns>True if the protection flags are equal, false otherwise.</returns>
-        friend bool operator==( const protection_flags_t& lhs, const protection_flags_t& rhs );
+        friend bool operator==( const protection_flags_t& lhs, const protection_flags_t& rhs ) noexcept;
 
         /// <summary>
         /// Writes the protection flags to the output stream.
         /// </summary>
         /// <param name="os">The output stream.</param>
         /// <param name="flags">The protection flags object.</param>
+        /// <returns>The output stream.</returns>
         friend std::ostream& operator<<( std::ostream& os, const protection_flags_t& flags );
 
        private:
         std::uint32_t flags;
     };
-
 }  // namespace wincpp::memory
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/memory/protection.inl"
+#endif

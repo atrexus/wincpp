@@ -1,9 +1,7 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace wincpp::windows
 {
@@ -24,25 +22,29 @@ namespace wincpp
     {
         friend struct process_t;
 
-        process_t *p;
+        process_t* p;
 
         /// <summary>
         /// Creates a new window factory object.
         /// </summary>
         /// <param name="process">The process object.</param>
-        explicit window_factory( process_t *p ) noexcept;
+        explicit window_factory( process_t* p ) noexcept;
 
        public:
         /// <summary>
         /// Gets the main window of the process.
         /// </summary>
+        /// <returns>The main window.</returns>
         std::optional< windows::window_t > main_window() const;
 
         /// <summary>
         /// Gets a list of windows in the process.
         /// </summary>
+        /// <returns>The windows.</returns>
         std::vector< windows::window_t > windows() const;
     };
 }  // namespace wincpp
 
-#include "windows/window.hpp"
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/window_factory.inl"
+#endif

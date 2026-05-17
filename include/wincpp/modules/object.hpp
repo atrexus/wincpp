@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -16,7 +15,6 @@ namespace wincpp::modules
 /// <summary>
 /// Contains all structures for MSVC RTTI.
 /// </summary>
-/// </summary>
 namespace wincpp::modules::rtti
 {
     /// <summary>
@@ -27,7 +25,7 @@ namespace wincpp::modules::rtti
         /// <summary>
         /// Address of the `type_info` object.
         /// </summary>
-        const std::uintptr_t type_info_vftable;
+        std::uintptr_t type_info_vftable;
 
         /// <summary>
         /// An unused field. Always 0.
@@ -40,6 +38,9 @@ namespace wincpp::modules::rtti
         std::string name;
     };
 
+    /// <summary>
+    /// Represents the MSVC complete object locator.
+    /// </summary>
     struct complete_object_locator_t
     {
         /// <summary>
@@ -73,6 +74,9 @@ namespace wincpp::modules::rtti
         std::int32_t self_offset;
     };
 
+    /// <summary>
+    /// Represents the MSVC class hierarchy descriptor.
+    /// </summary>
     struct class_heirarchy_descriptor_t
     {
         /// <summary>
@@ -101,21 +105,24 @@ namespace wincpp::modules::rtti
     /// </summary>
     struct object_t final
     {
-        friend struct module_t;
+        friend struct modules::module_t;
 
         /// <summary>
-        /// Gets the type descriptor of the object. This is the RTTI information.
+        /// Gets the type descriptor of the object.
         /// </summary>
+        /// <returns>The type descriptor.</returns>
         rtti::type_descriptor_t type_descriptor() const noexcept;
 
         /// <summary>
         /// Gets the demangled name of the object.
         /// </summary>
+        /// <returns>The object name.</returns>
         std::string name() const noexcept;
 
         /// <summary>
         /// Gets the address of the vtable.
         /// </summary>
+        /// <returns>The vtable address.</returns>
         std::uintptr_t vtable() const noexcept;
 
        private:
@@ -131,5 +138,8 @@ namespace wincpp::modules::rtti
         /// <param name="col">The complete object locator.</param>
         explicit object_t( const module_t* module, std::uintptr_t vtable_address, const rtti::complete_object_locator_t& col ) noexcept;
     };
-
 }  // namespace wincpp::modules::rtti
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/modules/object.inl"
+#endif

@@ -1,14 +1,22 @@
 #pragma once
 
-// clang-format off
-#include "wincpp/memory_factory.hpp"
-#include "wincpp/core/error.hpp"
-// clang-format on
-
-#include <Psapi.h>
-
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <optional>
+#include <span>
+#include <type_traits>
 #include <vector>
+
+#include "wincpp/memory/protection.hpp"
+#include "wincpp/memory/protection_operation.hpp"
+#include "wincpp/patterns/scanner.hpp"
+
+namespace wincpp
+{
+    class memory_factory;
+}  // namespace wincpp
 
 namespace wincpp::patterns
 {
@@ -26,16 +34,15 @@ namespace wincpp::memory
     struct region_t;
 
     /// <summary>
+    /// Represents a list of memory regions.
+    /// </summary>
+    class region_list;
+
+    /// <summary>
     /// Contains extended working set information for a page.
     /// </summary>
     struct working_set_information_t
     {
-        /// <summary>
-        /// Creates a new working set information object.
-        /// </summary>
-        /// <param name="info">The working set information.</param>
-        working_set_information_t( const PSAPI_WORKING_SET_EX_INFORMATION& info ) noexcept;
-
         /// <summary>
         /// The virtual address of the page.
         /// </summary>
@@ -58,8 +65,7 @@ namespace wincpp::memory
     };
 
     /// <summary>
-    /// An abstract structure representing a memory object. These object can read and write memory, allocate and free memory, and perform other memory
-    /// operations.
+    /// An abstract structure representing a memory object.
     /// </summary>
     struct memory_t
     {
@@ -71,90 +77,131 @@ namespace wincpp::memory
         /// <param name="size">The size of the memory object.</param>
         explicit memory_t( const memory_factory& mem, std::uintptr_t address, std::size_t size ) noexcept;
 
-        // This forces the structure to be abstract.
+        /// <summary>
+        /// Function used to decide whether a memory region should be included in a memory search.
+        /// </summary>
+        using region_filter = std::function< bool( const memory::region_t& ) >;
+
+        /// <summary>
+        /// Destroys the memory object.
+        /// </summary>
         virtual ~memory_t() = default;
 
         /// <summary>
         /// Gets the address of the memory object.
         /// </summary>
+        /// <returns>The memory address.</returns>
         constexpr std::uintptr_t address() const noexcept;
 
         /// <summary>
         /// Gets the size of the memory object.
         /// </summary>
+        /// <returns>The memory size.</returns>
         constexpr std::size_t size() const noexcept;
 
         /// <summary>
         /// Determines if the object contains the specified address.
         /// </summary>
         /// <param name="address">The address to check.</param>
-        /// <returns>True if the region contains the address, false otherwise.</returns>
+        /// <returns>True if the region contains the address.</returns>
         constexpr bool contains( std::uintptr_t address ) const noexcept;
 
         /// <summary>
-        /// Queries the working set information for the memory object. It will return information about the page that contains the address.
+        /// Queries the working set information for the memory object.
         /// </summary>
+        /// <returns>The working set information.</returns>
         working_set_information_t working_set_information() const;
 
         /// <summary>
         /// Reads the entire memory object.
         /// </summary>
         /// <returns>A shared pointer to the memory read.</returns>
-        inline std::shared_ptr< std::uint8_t[] > read() const;
+        std::shared_ptr< std::uint8_t[] > read() const;
 
         /// <summary>
         /// Reads the memory object into the buffer.
         /// </summary>
         /// <param name="buffer">The buffer to read into.</param>
-        inline void read( std::uint8_t* buffer ) const;
+        void read( std::uint8_t* buffer ) const;
+
+        /// <summary>
+        /// Reads bytes from the memory object into a byte span.
+        /// </summary>
+        /// <param name="buffer">The buffer to read into.</param>
+        void read( std::span< std::byte > buffer ) const;
 
         /// <summary>
         /// Reads memory from the process.
         /// </summary>
-        /// <param name="address">The offset to read from. The offset is relative to the base address of this memory object.</param>
+        /// <param name="offset">The offset to read from.</param>
         /// <param name="size">The size of the memory to read.</param>
         /// <returns>The memory read.</returns>
-        inline std::shared_ptr< std::uint8_t[] > read( std::uintptr_t offset, std::size_t size ) const;
+        std::shared_ptr< std::uint8_t[] > read( std::uintptr_t offset, std::size_t size ) const;
+
+        /// <summary>
+        /// Reads bytes from the memory object into a byte span.
+        /// </summary>
+        /// <param name="offset">The offset to read from.</param>
+        /// <param name="buffer">The buffer to read into.</param>
+        void read( std::uintptr_t offset, std::span< std::byte > buffer ) const;
 
         /// <summary>
         /// Reads a value from memory.
         /// </summary>
         /// <typeparam name="T">The type of value to read.</typeparam>
-        /// <param name="address">The address to read from.</param>
+        /// <param name="offset">The offset to read from.</param>
         /// <returns>The value read.</returns>
         template< typename T >
-        inline T read( std::uintptr_t offset ) const;
+            requires std::is_trivially_copyable_v< T >
+        T read( std::uintptr_t offset ) const;
 
         /// <summary>
         /// Writes memory to the process.
         /// </summary>
-        /// <param name="address">The address to write to.</param>
+        /// <param name="offset">The offset to write to.</param>
         /// <param name="buffer">The buffer to write.</param>
         /// <param name="size">The size of the buffer.</param>
         /// <returns>The number of bytes written.</returns>
-        inline std::size_t write( std::uintptr_t offset, const std::uint8_t* buffer, std::size_t size ) const;
+        std::size_t write( std::uintptr_t offset, const std::uint8_t* buffer, std::size_t size ) const;
 
         /// <summary>
         /// Writes memory to the process.
         /// </summary>
-        /// <param name="address">The address to write to.</param>
+        /// <param name="offset">The offset to write to.</param>
         /// <param name="buffer">The buffer to write.</param>
         /// <param name="size">The size of the buffer.</param>
         /// <returns>The number of bytes written.</returns>
-        inline std::size_t write( std::uintptr_t offset, std::shared_ptr< std::uint8_t[] > buffer, std::size_t size ) const;
+        std::size_t write( std::uintptr_t offset, const std::shared_ptr< std::uint8_t[] >& buffer, std::size_t size ) const;
+
+        /// <summary>
+        /// Writes a byte span to the memory object.
+        /// </summary>
+        /// <param name="buffer">The buffer to write.</param>
+        /// <returns>The number of bytes written.</returns>
+        std::size_t write( std::span< const std::byte > buffer ) const;
+
+        /// <summary>
+        /// Writes a byte span to the memory object.
+        /// </summary>
+        /// <param name="offset">The offset to write to.</param>
+        /// <param name="buffer">The buffer to write.</param>
+        /// <returns>The number of bytes written.</returns>
+        std::size_t write( std::uintptr_t offset, std::span< const std::byte > buffer ) const;
 
         /// <summary>
         /// Writes a value to memory.
         /// </summary>
         /// <typeparam name="T">The type of value to write.</typeparam>
-        /// <param name="address">The address to write to.</param>
+        /// <param name="offset">The offset to write to.</param>
         /// <param name="value">The value to write.</param>
         template< typename T >
-        inline void write( std::uintptr_t offset, T value ) const;
+            requires std::is_trivially_copyable_v< T >
+        void write( std::uintptr_t offset, const T& value ) const;
 
         /// <summary>
         /// Gets the regions of the memory object.
         /// </summary>
+        /// <returns>The memory region list.</returns>
         memory::region_list regions() const;
 
         /// <summary>
@@ -165,11 +212,47 @@ namespace wincpp::memory
         std::optional< std::uintptr_t > find( const patterns::pattern_t& pattern ) const noexcept;
 
         /// <summary>
+        /// Searches for the pattern in the memory object with the specified scanner algorithm.
+        /// </summary>
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <param name="algorithm">The scanner algorithm to use.</param>
+        /// <returns>The relative location.</returns>
+        std::optional< std::uintptr_t > find( const patterns::pattern_t& pattern, patterns::scanner::algorithm_t algorithm ) const;
+
+        /// <summary>
+        /// Searches for the pattern in the memory object with the specified scanner algorithm and region filter.
+        /// </summary>
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <param name="algorithm">The scanner algorithm to use.</param>
+        /// <param name="filter">The region filter to apply before scanning.</param>
+        /// <returns>The relative location.</returns>
+        std::optional< std::uintptr_t >
+        find( const patterns::pattern_t& pattern, patterns::scanner::algorithm_t algorithm, const region_filter& filter ) const;
+
+        /// <summary>
         /// Searches for all occurrences of the pattern in the memory object.
         /// </summary>
         /// <param name="pattern">The pattern to search for.</param>
         /// <returns>The relative locations.</returns>
         std::vector< std::uintptr_t > find_all( const patterns::pattern_t& pattern ) const noexcept;
+
+        /// <summary>
+        /// Searches for all occurrences of the pattern in the memory object with the specified scanner algorithm.
+        /// </summary>
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <param name="algorithm">The scanner algorithm to use.</param>
+        /// <returns>The relative locations.</returns>
+        std::vector< std::uintptr_t > find_all( const patterns::pattern_t& pattern, patterns::scanner::algorithm_t algorithm ) const;
+
+        /// <summary>
+        /// Searches for all occurrences of the pattern in the memory object with the specified scanner algorithm and region filter.
+        /// </summary>
+        /// <param name="pattern">The pattern to search for.</param>
+        /// <param name="algorithm">The scanner algorithm to use.</param>
+        /// <param name="filter">The region filter to apply before scanning.</param>
+        /// <returns>The relative locations.</returns>
+        std::vector< std::uintptr_t >
+        find_all( const patterns::pattern_t& pattern, patterns::scanner::algorithm_t algorithm, const region_filter& filter ) const;
 
         /// <summary>
         /// Changes the protection of the memory region.
@@ -185,68 +268,28 @@ namespace wincpp::memory
         /// Changes the protection of the memory region.
         /// </summary>
         /// <param name="new_flags">The new protection flags.</param>
+        /// <param name="scoped">Whether the protection operation is scoped.</param>
         /// <returns>The protection operation object.</returns>
         protection_operation protect( protection_flags_t new_flags, bool scoped ) const;
 
-        memory_factory factory;
+        /// <summary>
+        /// Gets the memory factory used by this memory object.
+        /// </summary>
+        /// <returns>The memory factory.</returns>
+        const memory_factory& memory() const noexcept;
+
+       protected:
+        const memory_factory* factory;
 
        private:
         bool is_valid_region( const memory::region_t& region ) const noexcept;
+        std::uintptr_t checked_address( std::uintptr_t offset, std::size_t size ) const;
 
         std::uintptr_t _address;
         std::size_t _size;
     };
-
-    constexpr std::uintptr_t memory_t::address() const noexcept
-    {
-        return _address;
-    }
-
-    constexpr std::size_t memory_t::size() const noexcept
-    {
-        return _size;
-    }
-
-    constexpr bool memory_t::contains( std::uintptr_t address ) const noexcept
-    {
-        return _address <= address && address <= _address + _size;
-    }
-
-    inline std::shared_ptr< std::uint8_t[] > memory_t::read() const
-    {
-        return read( 0, _size );
-    }
-
-    inline void memory_t::read( std::uint8_t* buffer ) const
-    {
-        if ( !factory.read( _address, _size, buffer ) )
-            throw core::error::from_win32( GetLastError() );
-    }
-
-    inline std::shared_ptr< std::uint8_t[] > memory_t::read( std::uintptr_t offset, std::size_t size ) const
-    {
-        return factory.read( _address + offset, size );
-    }
-
-    inline std::size_t memory_t::write( std::uintptr_t offset, std::shared_ptr< std::uint8_t[] > buffer, std::size_t size ) const
-    {
-        return factory.write( _address + offset, buffer, size );
-    }
-
-    inline std::size_t memory_t::write( std::uintptr_t offset, const std::uint8_t* buffer, std::size_t size ) const
-    {
-        return factory.write( _address + offset, buffer, size );
-    }
-
-    template< typename T >
-    inline T memory_t::read( std::uintptr_t offset ) const
-    {
-        return factory.read< T >( _address + offset );
-    }
-
-    template< typename T >
-    inline void memory_t::write( std::uintptr_t offset, T value ) const
-    {
-        factory.write< T >( _address + offset, value );
-    }
 }  // namespace wincpp::memory
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/memory/memory.inl"
+#endif

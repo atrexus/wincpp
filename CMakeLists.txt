@@ -1,38 +1,77 @@
-﻿# CMakeList.txt : CMake project for wincpp, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required(VERSION 3.23)
 
-# Set our C++ standard
-set (CMAKE_CXX_STANDARD 23)
+project(wincpp VERSION 2.0.0 LANGUAGES CXX)
 
-# Define our project
-project (wincpp LANGUAGES CXX)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-# Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+add_library(wincpp INTERFACE)
+add_library(wincpp::wincpp ALIAS wincpp)
 
-# Define the library targets
-add_subdirectory (src)
+target_compile_features(wincpp INTERFACE cxx_std_23)
 
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    # We're in the root, define additional targets for developers.
-    option(BUILD_EXAMPLES   "whether or not examples should be built" ON)
-    option(BUILD_PACKAGE    "whether or not to build a package" ON)
+target_include_directories(wincpp INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+install(TARGETS wincpp EXPORT wincppTargets)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/wincpp" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake"
+    "include(\${CMAKE_CURRENT_LIST_DIR}/wincppTargets.cmake)\n"
+)
+
+set(wincpp_CONFFILE_DEST "${CMAKE_INSTALL_DATAROOTDIR}/wincpp")
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/wincppConfigVersion.cmake"
+    DESTINATION "${wincpp_CONFFILE_DEST}"
+)
+
+install(EXPORT wincppTargets
+    FILE wincppTargets.cmake
+    NAMESPACE wincpp::
+    DESTINATION "${wincpp_CONFFILE_DEST}"
+)
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    option(BUILD_EXAMPLES "whether or not examples should be built" ON)
+    option(BUILD_PACKAGE "whether or not to build a package" ON)
+    option(BUILD_TESTS "whether or not tests should be built" ON)
 
     if(BUILD_PACKAGE)
-        set(package_files include/ src/ CMakeLists.txt LICENSE)
+        set(package_files include/ examples/ tests/ CMakeLists.txt LICENSE README.md)
+        file(GLOB_RECURSE package_dependencies CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/*"
+            "${CMAKE_CURRENT_SOURCE_DIR}/examples/*"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/*"
+        )
+        list(APPEND package_dependencies
+            "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
+            "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+        )
         add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-src.zip
             COMMAND ${CMAKE_COMMAND} -E tar c ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-src.zip --format=zip -- ${package_files}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            DEPENDS ${package_files})
+            DEPENDS ${package_dependencies})
         add_custom_target(${PROJECT_NAME}_package DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-src.zip)
     endif()
 
-    if (BUILD_EXAMPLES)
-		add_subdirectory(examples)
+    if(BUILD_EXAMPLES AND WIN32)
+        add_subdirectory(examples)
+    endif()
+
+    if(BUILD_TESTS AND WIN32)
+        enable_testing()
+        add_subdirectory(tests)
     endif()
 endif()

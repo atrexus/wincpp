@@ -1,9 +1,8 @@
 #include <chrono>
-#include <execution>
+#include <exception>
 #include <iostream>
+#include <system_error>
 #include <thread>
-#include <print>
-#include <wincpp/patterns/scanner.hpp>
 #include <wincpp/process.hpp>
 
 using namespace wincpp;
@@ -16,7 +15,7 @@ int main()
 
         if ( !process )
         {
-            std::cout << "Failed to open the process." << std::endl;
+            std::cout << "Failed to open the process.\n";
             return 1;
         }
 
@@ -28,11 +27,11 @@ int main()
     }
     catch ( const std::system_error& e )
     {
-        std::cout << "[-] Error [" << e.code() << "]: " << e.what() << std::endl;
+        std::cout << "[-] Error [" << e.code() << "]: " << e.what() << '\n';
     }
     catch ( const std::exception& e )
     {
-        std::cout << "[-] Error: " << e.what() << std::endl;
+        std::cout << "[-] Error: " << e.what() << '\n';
     }
 
     return 0;

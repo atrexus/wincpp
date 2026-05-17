@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -29,26 +32,20 @@ namespace wincpp::patterns
         /// Creates a new pattern from the bytes of the string (each character is a byte).
         /// </summary>
         /// <param name="object">The string.</param>
-        template<>
-        pattern_t( const std::string& object ) noexcept : pattern_t( object.data(), object.size() )
-        {
-        }
+        pattern_t( const std::string& object ) noexcept;
 
         /// <summary>
         /// Creates a new pattern from the bytes of the string (each character is a byte).
         /// </summary>
         /// <param name="object">The string.</param>
-        template<>
-        pattern_t( const std::string_view& object ) noexcept : pattern_t( object.data(), object.size() )
-        {
-        }
+        pattern_t( std::string_view object ) noexcept;
 
         /// <summary>
         /// Creates a new pattern object with the specified pointer and its size.
         /// </summary>
         /// <typeparam name="T">The type of the pointer.</typeparam>
-        /// <param name="object"></param>
-        /// <param name="size"></param>
+        /// <param name="object">The object pointer.</param>
+        /// <param name="size">The object size.</param>
         template< typename T >
         pattern_t( const T* object, std::size_t size ) noexcept;
 
@@ -56,41 +53,57 @@ namespace wincpp::patterns
         /// Creates a new pattern object with the specified array of bytes and mask. This is an IDA-style pattern.
         /// Example: "\xA1\x00\x00\x00\x00\xB2", "x????x"
         /// </summary>
-        /// <param name="aob"></param>
-        /// <param name="mask"></param>
-        pattern_t( const char* const aob, const std::string_view smask ) noexcept;
+        /// <param name="aob">The byte sequence.</param>
+        /// <param name="smask">The mask sequence.</param>
+        pattern_t( const char* aob, std::string_view smask ) noexcept;
+
+        /// <summary>
+        /// Creates a pattern from an IDA-style pattern string.
+        /// Example: "48 8D 0D ? ? ? ? 48 8D".
+        /// </summary>
+        /// <param name="object">The IDA-style pattern string.</param>
+        /// <returns>The parsed pattern.</returns>
+        static pattern_t from_ida( std::string_view object );
+
+        /// <summary>
+        /// Attempts to create a pattern from an IDA-style pattern string without throwing an exception for invalid input.
+        /// Example: "48 8D 0D ? ? ? ? 48 8D".
+        /// </summary>
+        /// <param name="object">The IDA-style pattern string.</param>
+        /// <returns>The parsed pattern, if parsing succeeded.</returns>
+        static std::optional< pattern_t > try_from_ida( std::string_view object );
 
         /// <summary>
         /// Converts the pattern to a string.
         /// </summary>
+        /// <returns>The string representation.</returns>
         std::string to_string() const noexcept;
 
         /// <summary>
         /// Writes the current pattern to the specified output stream.
         /// </summary>
-        friend std::ostream& operator<<( std::ostream& os, const pattern_t& p ) noexcept;
+        /// <param name="os">The output stream.</param>
+        /// <param name="pattern">The pattern object.</param>
+        /// <returns>The output stream.</returns>
+        friend std::ostream& operator<<( std::ostream& os, const pattern_t& pattern ) noexcept;
 
+        /// <summary>
+        /// The pattern bytes.
+        /// </summary>
         std::shared_ptr< std::uint8_t[] > bytes;
+
+        /// <summary>
+        /// The byte mask.
+        /// </summary>
         std::shared_ptr< bool[] > mask;
+
+        /// <summary>
+        /// The pattern size.
+        /// </summary>
         std::size_t size = 0;
     };
-
-    template< typename T >
-    inline pattern_t::pattern_t( const T* object, std::size_t size ) noexcept : size( size )
-    {
-        bytes = std::shared_ptr< std::uint8_t[] >( new std::uint8_t[ size ] );
-        mask = std::shared_ptr< bool[] >( new bool[ size ] );
-
-        for ( std::size_t i = 0; i < size; ++i )
-        {
-            bytes[ i ] = reinterpret_cast< const std::uint8_t* >( object )[ i ];
-            mask[ i ] = true;
-        }
-    }
-
-    template< typename T >
-    pattern_t::pattern_t( const T& object ) noexcept : pattern_t( std::addressof( object ), sizeof( T ) )
-    {
-    }
-
 }  // namespace wincpp::patterns
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/patterns/pattern.inl"
+#endif

@@ -397,6 +397,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# JetBrains Clion
+.idea/
+
 # cmake
 out/
 CMakeFiles/

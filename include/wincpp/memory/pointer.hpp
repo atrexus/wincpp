@@ -1,9 +1,10 @@
 #pragma once
 
 #include <concepts>
-#include <iostream>
+#include <cstdint>
+#include <ostream>
 
-#include "memory.hpp"
+#include "wincpp/memory/memory.hpp"
 
 namespace wincpp::memory
 {
@@ -24,35 +25,26 @@ namespace wincpp::memory
             /// </summary>
             /// <param name="address">The address of the value.</param>
             /// <param name="factory">The process's memory factory.</param>
-            explicit value_t( std::uintptr_t address, const memory_factory &factory ) noexcept : address( address ), factory( factory )
-            {
-            }
+            explicit value_t( std::uintptr_t address, const memory_factory& factory ) noexcept;
 
             /// <summary>
             /// Converts the value to the type T.
             /// </summary>
             /// <returns>The value as type T.</returns>
-            inline operator T() const
-            {
-                return factory.read< T >( address );
-            }
+            operator T() const;
 
             /// <summary>
             /// Assigns a value to the memory.
             /// </summary>
-            inline const value_t &operator=( T value ) const
-            {
-                factory.write< T >( address, value );
-                return *this;
-            }
+            /// <param name="value">The value to assign.</param>
+            /// <returns>The value object.</returns>
+            const value_t& operator=( const T& value ) const;
 
             /// <summary>
             /// Gets the values as a pointer.
             /// </summary>
-            inline operator pointer_t< U >() const
-            {
-                return pointer_t< U >( factory.read< T >( address ), factory );
-            }
+            /// <returns>The pointer object.</returns>
+            operator pointer_t< U >() const;
 
             /// <summary>
             /// Writes the value of the pointer to the output stream.
@@ -60,7 +52,7 @@ namespace wincpp::memory
             /// <param name="os">The output stream.</param>
             /// <param name="value">The value object.</param>
             /// <returns>The output stream.</returns>
-            friend std::ostream &operator<<( std::ostream &os, const value_t &value )
+            friend std::ostream& operator<<( std::ostream& os, const value_t& value )
             {
                 os << static_cast< T >( value );
                 return os;
@@ -71,8 +63,8 @@ namespace wincpp::memory
             /// </summary>
             /// <param name="lhs">The left-hand side value.</param>
             /// <param name="rhs">The right-hand side value.</param>
-            /// <returns>True if the values are equal, false otherwise.</returns>
-            friend bool operator==( const value_t &lhs, const T &rhs )
+            /// <returns>True if the values are equal.</returns>
+            friend bool operator==( const value_t& lhs, const T& rhs )
             {
                 return static_cast< T >( lhs ) == rhs;
             }
@@ -82,8 +74,8 @@ namespace wincpp::memory
             /// </summary>
             /// <param name="lhs">The left-hand side value.</param>
             /// <param name="rhs">The right-hand side value.</param>
-            /// <returns>True if the values are equal, false otherwise.</returns>
-            friend bool operator==( const T &lhs, const value_t &rhs )
+            /// <returns>True if the values are equal.</returns>
+            friend bool operator==( const T& lhs, const value_t& rhs )
             {
                 return lhs == static_cast< T >( rhs );
             }
@@ -93,8 +85,8 @@ namespace wincpp::memory
             /// </summary>
             /// <param name="lhs">The left-hand side value.</param>
             /// <param name="rhs">The right-hand side value.</param>
-            /// <returns>True if the values are not equal, false otherwise.</returns>
-            friend bool operator!=( const value_t &lhs, const T &rhs )
+            /// <returns>True if the values are not equal.</returns>
+            friend bool operator!=( const value_t& lhs, const T& rhs )
             {
                 return static_cast< T >( lhs ) != rhs;
             }
@@ -104,24 +96,36 @@ namespace wincpp::memory
             /// </summary>
             /// <param name="lhs">The left-hand side value.</param>
             /// <param name="rhs">The right-hand side value.</param>
-            /// <returns>True if the values are not equal, false otherwise.</returns>
-            friend bool operator!=( const T &lhs, const value_t &rhs )
+            /// <returns>True if the values are not equal.</returns>
+            friend bool operator!=( const T& lhs, const value_t& rhs )
             {
                 return lhs != static_cast< T >( rhs );
             }
 
-            friend bool operator==( const value_t &lhs, const value_t &rhs )
+            /// <summary>
+            /// Compares two value objects.
+            /// </summary>
+            /// <param name="lhs">The left-hand side value.</param>
+            /// <param name="rhs">The right-hand side value.</param>
+            /// <returns>True if the values are equal.</returns>
+            friend bool operator==( const value_t& lhs, const value_t& rhs )
             {
                 return static_cast< T >( lhs ) == static_cast< T >( rhs );
             }
 
-            friend bool operator!=( const value_t &lhs, const value_t &rhs )
+            /// <summary>
+            /// Compares two value objects.
+            /// </summary>
+            /// <param name="lhs">The left-hand side value.</param>
+            /// <param name="rhs">The right-hand side value.</param>
+            /// <returns>True if the values are not equal.</returns>
+            friend bool operator!=( const value_t& lhs, const value_t& rhs )
             {
                 return static_cast< T >( lhs ) != static_cast< T >( rhs );
             }
 
             std::uintptr_t address;
-            memory_factory factory;
+            const memory_factory* factory;
         };
 
         /// <summary>
@@ -129,67 +133,42 @@ namespace wincpp::memory
         /// </summary>
         /// <param name="address">The address of the pointer.</param>
         /// <param name="factory">The process's memory factory.</param>
-        explicit pointer_t( const std::uintptr_t address, const memory_factory &factory ) noexcept
-            : memory_t( factory, address, sizeof( T ) ),
-              value( address, factory )
-        {
-        }
+        explicit pointer_t( std::uintptr_t address, const memory_factory& factory ) noexcept;
 
+        /// <summary>
+        /// Converts this pointer to another pointer type.
+        /// </summary>
+        /// <typeparam name="U">The new value type.</typeparam>
+        /// <returns>The converted pointer.</returns>
         template< typename U >
-        inline operator pointer_t< U >() const
-        {
-            return pointer_t< U >( value.address, value.factory );
-        }
+        operator pointer_t< U >() const;
 
         /// <summary>
         /// Dereferences the pointer.
         /// </summary>
         /// <returns>The value at the pointer.</returns>
-        inline value_t< T > operator*() const noexcept
-        {
-            return value;
-        }
+        value_t< T > operator*() const noexcept;
 
         /// <summary>
         /// Converts the pointer to the address.
         /// </summary>
         /// <returns>The address of the pointer.</returns>
-        inline operator std::uintptr_t() const noexcept
-        {
-            return value.address;
-        }
+        operator std::uintptr_t() const noexcept;
 
         /// <summary>
         /// Returns whether the pointer is valid.
         /// </summary>
-        /// <remarks>
-        /// Todo: Search for a memory region that contains the pointer. If the region is not found, the pointer is invalid.
-        /// </remarks>
-        inline operator bool() const noexcept
-        {
-            if ( value.address != 0 )
-            {
-                for ( const auto &region : value.factory.regions() )
-                {
-                    if ( region.contains( value.address ) )
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
+        /// <returns>True if the pointer points into a known memory region.</returns>
+        explicit operator bool() const noexcept;
 
         /// <summary>
         /// Increments the pointer by the specified offset.
         /// </summary>
+        /// <typeparam name="U">The offset type.</typeparam>
         /// <param name="offset">The offset to increment the pointer by.</param>
+        /// <returns>The incremented pointer.</returns>
         template< std::integral U >
-        inline pointer_t< T > operator+( U offset ) const noexcept
-        {
-            return pointer_t< T >( value.address + offset, value.factory );
-        }
+        pointer_t< T > operator+( U offset ) const noexcept;
 
         /// <summary>
         /// Writes the value of the pointer to the output stream.
@@ -197,7 +176,7 @@ namespace wincpp::memory
         /// <param name="os">The output stream.</param>
         /// <param name="pointer">The pointer object.</param>
         /// <returns>The output stream.</returns>
-        friend std::ostream &operator<<( std::ostream &os, const pointer_t &pointer )
+        friend std::ostream& operator<<( std::ostream& os, const pointer_t& pointer )
         {
             os << "0x" << std::hex << pointer.value.address;
             return os;
@@ -208,8 +187,8 @@ namespace wincpp::memory
         /// </summary>
         /// <param name="lhs">The left-hand side pointer.</param>
         /// <param name="rhs">The right-hand side pointer.</param>
-        /// <returns>True if the pointers are equal, false otherwise.</returns>
-        friend bool operator==( const pointer_t &lhs, const pointer_t &rhs )
+        /// <returns>True if the pointers are equal.</returns>
+        friend bool operator==( const pointer_t& lhs, const pointer_t& rhs )
         {
             return lhs.value.address == rhs.value.address;
         }
@@ -219,8 +198,8 @@ namespace wincpp::memory
         /// </summary>
         /// <param name="lhs">The left-hand side pointer.</param>
         /// <param name="rhs">The right-hand side pointer.</param>
-        /// <returns>True if the pointers are not equal, false otherwise.</returns>
-        friend bool operator!=( const pointer_t &lhs, const pointer_t &rhs )
+        /// <returns>True if the pointers are not equal.</returns>
+        friend bool operator!=( const pointer_t& lhs, const pointer_t& rhs )
         {
             return lhs.value.address != rhs.value.address;
         }
@@ -228,3 +207,7 @@ namespace wincpp::memory
         value_t< T > value;
     };
 }  // namespace wincpp::memory
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/memory/pointer.inl"
+#endif

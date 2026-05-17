@@ -1,10 +1,7 @@
-#include <array>
-#include <chrono>
-#include <execution>
+#include <exception>
 #include <iostream>
 #include <print>
-#include <thread>
-#include <wincpp/patterns/scanner.hpp>
+#include <system_error>
 #include <wincpp/process.hpp>
 
 using namespace wincpp;
@@ -13,7 +10,7 @@ int main()
 {
     try
     {
-        const auto& process = process_t::open( "RobloxPlayerBeta.exe" );
+        const auto process = process_t::open( "RobloxPlayerBeta.exe" );
 
         if ( !process )
         {
@@ -30,11 +27,11 @@ int main()
     }
     catch ( const std::system_error& e )
     {
-        std::cout << "[-] Error [" << e.code() << "]: " << e.what() << std::endl;
+        std::cout << "[-] Error [" << e.code() << "]: " << e.what() << '\n';
     }
     catch ( const std::exception& e )
     {
-        std::cout << "[-] Error: " << e.what() << std::endl;
+        std::cout << "[-] Error: " << e.what() << '\n';
     }
 
     return 0;

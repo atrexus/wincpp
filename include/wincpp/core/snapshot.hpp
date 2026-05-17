@@ -1,11 +1,8 @@
 #pragma once
 
-// clang-format off
-#include "win.hpp"
-#include "error.hpp"
-// clang-format on
-
-#include <TlHelp32.h>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace wincpp::core
 {
@@ -15,86 +12,29 @@ namespace wincpp::core
     enum class snapshot_kind : std::uint32_t
     {
         /// <summary>
-        /// Includes all heaps of the process specified in th32ProcessID in the snapshot.
+        /// Includes all heaps of the process specified in the snapshot.
         /// </summary>
-        heaplist_t = TH32CS_SNAPHEAPLIST,
-
-        /// <summary>
-        /// Includes all modules of the process specified in th32ProcessID in the snapshot.
-        /// </summary>
-        module_t = TH32CS_SNAPMODULE,
-
-        /// <summary>
-        /// Includes all 32-bit modules of the process specified in th32ProcessID in the snapshot when called from a 64-bit
-        /// process.
-        /// </summary>
-        module32_t = TH32CS_SNAPMODULE32,
+        heaplist_t = 0x00000001,
 
         /// <summary>
         /// Includes all processes in the system in the snapshot.
         /// </summary>
-        process_t = TH32CS_SNAPPROCESS,
+        process_t = 0x00000002,
 
         /// <summary>
         /// Includes all threads in the system in the snapshot.
         /// </summary>
-        thread_t = TH32CS_SNAPTHREAD
-    };
-
-    /// <summary>
-    /// Represents a basic snapshot created by the tool help library.
-    /// </summary>
-    template< snapshot_kind T >
-    class snapshot final
-    {
-        std::shared_ptr< handle_t > handle;
-
-       public:
-        /// <summary>
-        /// The iterator class (implementation varies).
-        /// </summary>
-        class iterator;
+        thread_t = 0x00000004,
 
         /// <summary>
-        /// Creates a new snapshot using an optional process identifier.
+        /// Includes all modules of the process specified in the snapshot.
         /// </summary>
-        /// <param name="id">The identifier.</param>
-        /// <returns>The snapshot</returns>
-        static snapshot< T > create( std::uint32_t id = 0 )
-        {
-            HANDLE hSnapshot = CreateToolhelp32Snapshot( static_cast< DWORD >( T ), id );
-
-            if ( hSnapshot == INVALID_HANDLE_VALUE || !hSnapshot )
-                throw error::from_win32( GetLastError() );
-
-            return handle_t::create( hSnapshot );
-        }
+        module_t = 0x00000008,
 
         /// <summary>
-        /// Creates a new snapshot from a snapshot handle.
+        /// Includes all 32-bit modules of the process specified in the snapshot when called from a 64-bit process.
         /// </summary>
-        /// <param name="handle">The handle of the snapshot.</param>
-        snapshot( std::shared_ptr< handle_t > handle ) : handle( handle )
-        {
-        }
-
-        /// <summary>
-        /// Returns the iterator for the beginning of the snapshot.
-        /// </summary>
-        /// <returns>Iterator.</returns>
-        iterator begin() const
-        {
-            return iterator( handle );
-        }
-
-        /// <summary>
-        /// Returns the end of the iterator.
-        /// </summary>
-        /// <returns>Iterator.</returns>
-        iterator end() const
-        {
-            return iterator( nullptr );
-        }
+        module32_t = 0x00000010
     };
 
     /// <summary>
@@ -102,11 +42,6 @@ namespace wincpp::core
     /// </summary>
     struct process_entry_t
     {
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        process_entry_t() = default;
-
         /// <summary>
         /// The process identifier.
         /// </summary>
@@ -134,67 +69,12 @@ namespace wincpp::core
     };
 
     /// <summary>
-    /// Specialization for the process snapshot.
-    /// </summary>
-    template<>
-    class snapshot< snapshot_kind::process_t >::iterator
-    {
-        std::shared_ptr< handle_t > handle;
-        PROCESSENTRY32 entry;
-        mutable process_entry_t result;
-
-       public:
-        /// <summary>
-        /// Creates a new iterator for the snapshot class.
-        /// </summary>
-        /// <param name="handle">The handle to the snapshot.</param>
-        explicit iterator( std::shared_ptr< handle_t > handle );
-
-        /// <summary>
-        /// Implements the `*` operator for the iterator.
-        /// </summary>
-        /// <returns>Reference to the process entry.</returns>
-        process_entry_t& operator*() const noexcept;
-
-        /// <summary>
-        /// Implements the `->` operator for the iterator.
-        /// </summary>
-        /// <returns>Pointer to the process entry.</returns>
-        process_entry_t* operator->() const noexcept;
-
-        /// <summary>
-        /// Implements the `++` operator for the iterator.
-        /// </summary>
-        /// <returns>The new iterator with the next entry.</returns>
-        iterator& operator++();
-
-        /// <summary>
-        /// Compares the current iterator with another.
-        /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const noexcept;
-
-        /// <summary>
-        /// Compares the current iterator with another (not equals).
-        /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const noexcept;
-    };
-
-    /// <summary>
     /// Describes an entry from a list of the threads residing in the system address space when a snapshot was taken.
     /// </summary>
     struct thread_entry_t
     {
         /// <summary>
-        /// Default constructor.
-        /// </summary>
-        thread_entry_t() = default;
-
-        /// <summary>
-        /// The thread identifier, compatible with the thread identifier returned by the CreateProcess function.
+        /// The thread identifier.
         /// </summary>
         std::uint32_t id;
 
@@ -204,60 +84,9 @@ namespace wincpp::core
         std::uint32_t owner_id;
 
         /// <summary>
-        /// The kernel base priority level assigned to the thread. The priority is a number from 0 to 31, with 0 representing the lowest possible
-        /// thread priority. For more information, see KeQueryPriorityThread.
+        /// The kernel base priority level assigned to the thread.
         /// </summary>
         std::uint32_t base_priority;
-    };
-
-    /// <summary>
-    /// Specialization for the thread snapshot.
-    /// </summary>
-    template<>
-    class snapshot< snapshot_kind::thread_t >::iterator
-    {
-        std::shared_ptr< handle_t > handle;
-        THREADENTRY32 entry;
-        mutable thread_entry_t result;
-
-       public:
-        /// <summary>
-        /// Creates a new iterator for the snapshot class.
-        /// </summary>
-        /// <param name="handle">The handle to the snapshot.</param>
-        explicit iterator( std::shared_ptr< handle_t > handle );
-
-        /// <summary>
-        /// Implements the `*` operator for the iterator.
-        /// </summary>
-        /// <returns>Reference to the process entry.</returns>
-        thread_entry_t& operator*() const noexcept;
-
-        /// <summary>
-        /// Implements the `->` operator for the iterator.
-        /// </summary>
-        /// <returns>Pointer to the process entry.</returns>
-        thread_entry_t* operator->() const noexcept;
-
-        /// <summary>
-        /// Implements the `++` operator for the iterator.
-        /// </summary>
-        /// <returns>The new iterator with the next entry.</returns>
-        iterator& operator++();
-
-        /// <summary>
-        /// Compares the current iterator with another.
-        /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const noexcept;
-
-        /// <summary>
-        /// Compares the current iterator with another (not equals).
-        /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const noexcept;
     };
 
     /// <summary>
@@ -266,22 +95,12 @@ namespace wincpp::core
     struct module_entry_t
     {
         /// <summary>
-        /// Creates a new module entry.
-        /// </summary>
-        module_entry_t( const MODULEENTRY32& entry );
-
-        /// <summary>
-        /// Creates a copy of the module entry.
-        /// </summary>
-        module_entry_t( const module_entry_t& ) = default;
-
-        /// <summary>
         /// The identifier of the process whose modules are to be examined.
         /// </summary>
         std::uint32_t process_id;
 
         /// <summary>
-        /// The load count of the module, which is not generally meaningful, and usually equal to 0xFFFF.
+        /// The load count of the module.
         /// </summary>
         std::uint32_t usage_count;
 
@@ -296,7 +115,7 @@ namespace wincpp::core
         std::uint32_t base_size;
 
         /// <summary>
-        /// Tha name of the module.
+        /// The name of the module.
         /// </summary>
         std::string name;
 
@@ -307,45 +126,150 @@ namespace wincpp::core
     };
 
     /// <summary>
-    /// Specialization for the module snapshot.
+    /// Represents a materialized snapshot created by the tool help library.
+    /// </summary>
+    template< snapshot_kind T >
+    class snapshot;
+
+    /// <summary>
+    /// Represents a materialized process snapshot.
     /// </summary>
     template<>
-    class snapshot< snapshot_kind::module_t >::iterator
+    class snapshot< snapshot_kind::process_t > final
     {
-        std::shared_ptr< handle_t > handle;
-        MODULEENTRY32 entry;
-
        public:
         /// <summary>
-        /// Creates a new iterator for the snapshot class.
+        /// The entry type in the snapshot.
         /// </summary>
-        /// <param name="handle">The handle to the snapshot.</param>
-        explicit iterator( std::shared_ptr< handle_t > handle );
+        using value_type = process_entry_t;
 
         /// <summary>
-        /// Implements the `*` operator for the iterator.
+        /// The snapshot iterator type.
         /// </summary>
-        /// <returns>Reference to the process entry.</returns>
-        module_entry_t operator*() const noexcept;
+        using iterator = std::vector< value_type >::const_iterator;
 
         /// <summary>
-        /// Implements the `++` operator for the iterator.
+        /// Creates a new process snapshot.
         /// </summary>
-        /// <returns>The new iterator with the next entry.</returns>
-        iterator& operator++();
+        /// <param name="id">The optional process identifier.</param>
+        /// <returns>The snapshot.</returns>
+        static snapshot create( std::uint32_t id = 0 );
 
         /// <summary>
-        /// Compares the current iterator with another.
+        /// Creates a new process snapshot from entries.
         /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if the same.</returns>
-        bool operator==( const iterator& other ) const noexcept;
+        /// <param name="entries">The snapshot entries.</param>
+        explicit snapshot( std::vector< value_type > entries );
 
         /// <summary>
-        /// Compares the current iterator with another (not equals).
+        /// Returns the iterator for the beginning of the snapshot.
         /// </summary>
-        /// <param name="other">The other iterator.</param>
-        /// <returns>True if different.</returns>
-        bool operator!=( const iterator& other ) const noexcept;
+        /// <returns>The begin iterator.</returns>
+        iterator begin() const noexcept;
+
+        /// <summary>
+        /// Returns the end of the iterator.
+        /// </summary>
+        /// <returns>The end iterator.</returns>
+        iterator end() const noexcept;
+
+       private:
+        std::vector< value_type > entries;
+    };
+
+    /// <summary>
+    /// Represents a materialized thread snapshot.
+    /// </summary>
+    template<>
+    class snapshot< snapshot_kind::thread_t > final
+    {
+       public:
+        /// <summary>
+        /// The entry type in the snapshot.
+        /// </summary>
+        using value_type = thread_entry_t;
+
+        /// <summary>
+        /// The snapshot iterator type.
+        /// </summary>
+        using iterator = std::vector< value_type >::const_iterator;
+
+        /// <summary>
+        /// Creates a new thread snapshot.
+        /// </summary>
+        /// <param name="id">The optional process identifier.</param>
+        /// <returns>The snapshot.</returns>
+        static snapshot create( std::uint32_t id = 0 );
+
+        /// <summary>
+        /// Creates a new thread snapshot from entries.
+        /// </summary>
+        /// <param name="entries">The snapshot entries.</param>
+        explicit snapshot( std::vector< value_type > entries );
+
+        /// <summary>
+        /// Returns the iterator for the beginning of the snapshot.
+        /// </summary>
+        /// <returns>The begin iterator.</returns>
+        iterator begin() const noexcept;
+
+        /// <summary>
+        /// Returns the end of the iterator.
+        /// </summary>
+        /// <returns>The end iterator.</returns>
+        iterator end() const noexcept;
+
+       private:
+        std::vector< value_type > entries;
+    };
+
+    /// <summary>
+    /// Represents a materialized module snapshot.
+    /// </summary>
+    template<>
+    class snapshot< snapshot_kind::module_t > final
+    {
+       public:
+        /// <summary>
+        /// The entry type in the snapshot.
+        /// </summary>
+        using value_type = module_entry_t;
+
+        /// <summary>
+        /// The snapshot iterator type.
+        /// </summary>
+        using iterator = std::vector< value_type >::const_iterator;
+
+        /// <summary>
+        /// Creates a new module snapshot.
+        /// </summary>
+        /// <param name="id">The optional process identifier.</param>
+        /// <returns>The snapshot.</returns>
+        static snapshot create( std::uint32_t id = 0 );
+
+        /// <summary>
+        /// Creates a new module snapshot from entries.
+        /// </summary>
+        /// <param name="entries">The snapshot entries.</param>
+        explicit snapshot( std::vector< value_type > entries );
+
+        /// <summary>
+        /// Returns the iterator for the beginning of the snapshot.
+        /// </summary>
+        /// <returns>The begin iterator.</returns>
+        iterator begin() const noexcept;
+
+        /// <summary>
+        /// Returns the end of the iterator.
+        /// </summary>
+        /// <returns>The end iterator.</returns>
+        iterator end() const noexcept;
+
+       private:
+        std::vector< value_type > entries;
     };
 }  // namespace wincpp::core
+
+#ifndef WINCPP_SUPPRESS_AUTO_INL
+#include "wincpp/core/snapshot.inl"
+#endif
