@@ -1,14 +1,22 @@
 name: Build, Test, and Package
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to package and upload
+        required: true
+        type: string
   push:
+    branches:
+      - "**"
   pull_request:
   release:
     types: [published]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' && github.event_name != 'workflow_dispatch' }}
 
 permissions:
   contents: read
@@ -24,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
       - name: Configure
         shell: pwsh
@@ -84,7 +94,7 @@ jobs:
 
   release:
     name: Upload release package
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: validate
     permissions:
@@ -102,5 +112,5 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: release/wincpp-src.zip
-          tag: ${{ github.event.release.tag_name }}
+          tag: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
           overwrite: true
