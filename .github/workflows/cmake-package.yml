@@ -27,7 +27,7 @@ env:
 jobs:
   validate:
     name: Validate MSVC build and package
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
