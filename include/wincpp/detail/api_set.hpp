@@ -102,6 +102,9 @@ namespace wincpp::detail
         if ( !( normalized_contract.starts_with( "api-" ) || normalized_contract.starts_with( "ext-" ) ) )
             return {};
 
+        // The loader hashes everything before the final hyphen, excluding the contract revision.
+        const auto contract_prefix = std::string_view( normalized_contract ).substr( 0, normalized_contract.rfind( '-' ) );
+
         struct process_basic_information_t
         {
             void* reserved1;
@@ -146,10 +149,14 @@ namespace wincpp::detail
             if ( !entry )
                 return {};
 
+            if ( entry->hashed_length == 0 || entry->hashed_length % sizeof( wchar_t ) != 0 || entry->hashed_length > entry->name_length )
+                return {};
+
             const auto entry_name = read_api_set_string( schema, entry->name_offset, entry->name_length );
             if ( !entry_name )
                 return {};
-            if ( *entry_name != normalized_contract )
+            const auto entry_prefix = std::string_view( *entry_name ).substr( 0, entry->hashed_length / sizeof( wchar_t ) );
+            if ( entry_prefix != contract_prefix )
                 continue;
 
             if ( entry->value_offset > schema.size() ||

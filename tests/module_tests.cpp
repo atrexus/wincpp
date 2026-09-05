@@ -176,6 +176,27 @@ TEST_CASE( "Export wrappers expose symbol metadata when an exporting module is p
     CHECK_THROWS_AS( ( **ntdll )[ "__missing_export__" ], wincpp::core::error );
 }
 
+TEST_CASE( "Kernel32 API-set revision forwarders agree with the Windows loader", "[modules][exports][api-set]" )
+{
+    const auto process = wincpp::process_t::current();
+    REQUIRE( process != nullptr );
+
+    const auto kernel32 = process->module_factory.fetch_module( "kernel32.dll" );
+    REQUIRE( kernel32 != nullptr );
+
+    const auto expected = GetProcAddress( GetModuleHandleW( L"kernel32.dll" ), "InitOnceExecuteOnce" );
+    REQUIRE( expected != nullptr );
+    const auto symbol = kernel32->fetch_export( "InitOnceExecuteOnce" );
+    REQUIRE( symbol != nullptr );
+    CHECK( symbol->address() == reinterpret_cast< std::uintptr_t >( expected ) );
+
+    const auto host = process->module_factory.fetch_module( "API-MS-WIN-CORE-SYNCH-L1-2-0.DLL" );
+    REQUIRE( host != nullptr );
+    const auto host_symbol = host->fetch_export( "InitOnceExecuteOnce" );
+    REQUIRE( host_symbol != nullptr );
+    CHECK( host_symbol->address() == reinterpret_cast< std::uintptr_t >( expected ) );
+}
+
 TEST_CASE( "Export parsing handles mapped tables, ordinals, and forwarders", "[modules][exports]" )
 {
     const auto target_image = LoadLibraryA( "wincpp_export_target.dll" );

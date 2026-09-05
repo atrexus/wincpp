@@ -22,6 +22,7 @@ add_library(wincpp_export_forwarders SHARED
 )
 
 add_executable(wincpp_tests
+    api_set_tests.cpp
     core_tests.cpp
     macro_hygiene_tests.cpp
     memory_tests.cpp
