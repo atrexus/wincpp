@@ -12,6 +12,15 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+add_library(wincpp_export_target SHARED
+    export_fixture.cpp
+    export_target.def
+)
+
+add_library(wincpp_export_forwarders SHARED
+    export_forwarders.cpp
+)
+
 add_executable(wincpp_tests
     core_tests.cpp
     macro_hygiene_tests.cpp
@@ -26,6 +35,11 @@ add_executable(wincpp_tests
 target_link_libraries(wincpp_tests PRIVATE
     wincpp::wincpp
     Catch2::Catch2WithMain
+)
+
+add_dependencies(wincpp_tests
+    wincpp_export_target
+    wincpp_export_forwarders
 )
 
 list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
