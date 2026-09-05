@@ -8,13 +8,13 @@
 namespace wincpp::modules
 {
     inline module_t::export_t::export_t(
-        std::shared_ptr< const module_t > mod,
+        std::shared_ptr< const module_t > target_module,
         const std::string_view name,
-        const std::uintptr_t address,
-        const std::uint16_t ordinal ) noexcept
-        : mod( std::move( mod ) ),
+        const std::uintptr_t rva,
+        const std::uint32_t ordinal ) noexcept
+        : target_module( std::move( target_module ) ),
           export_name( name ),
-          rva( address ),
+          export_rva( rva ),
           ordinal_value( ordinal )
     {
     }
@@ -26,22 +26,23 @@ namespace wincpp::modules
 
     inline std::uintptr_t module_t::export_t::address() const noexcept
     {
-        return module()->address() + rva;
+        return target_module->address() + export_rva;
     }
 
-    inline std::uint16_t module_t::export_t::ordinal() const noexcept
+    inline std::uint32_t module_t::export_t::ordinal() const noexcept
     {
         return ordinal_value;
     }
 
     inline std::shared_ptr< const module_t > module_t::export_t::module() const noexcept
     {
-        return mod;
+        return target_module;
     }
 
     inline std::string module_t::export_t::to_string() const
     {
-        return std::format( "{} -> {} (0x{:X})", mod->name(), name(), address() );
+        const auto symbol = export_name.empty() ? std::format( "#{}", ordinal_value ) : export_name;
+        return std::format( "{} -> {} (0x{:X})", target_module->name(), symbol, address() );
     }
 
     inline std::ostream& operator<<( std::ostream& os, const module_t::export_t& exp )

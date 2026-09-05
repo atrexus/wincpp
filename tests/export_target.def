@@ -1,0 +1,5 @@
+LIBRARY wincpp_export_target
+EXPORTS
+    NamedAlias=fixture_export @8
+    NamedExport=fixture_export @7
+    OrdinalOnly=fixture_export @9 NONAME

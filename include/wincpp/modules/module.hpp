@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "wincpp/core/error.hpp"
@@ -58,24 +60,43 @@ namespace wincpp::modules
         std::string path() const noexcept;
 
         /// <summary>
-        /// Gets the list of exports in the module.
+        /// Enumerates the exports declared by this module and resolves forwarders to their final
+        /// targets. Named aliases remain separate entries; ordinal-only exports have an empty name.
         /// </summary>
-        /// <returns>The export list.</returns>
+        /// <returns>The cached list of resolved exports.</returns>
+        /// <exception cref="core::error">The export table is invalid or a forwarder cannot be resolved.</exception>
         const std::list< std::shared_ptr< module_t::export_t > >& exports() const;
 
         /// <summary>
-        /// Gets the export by its name.
+        /// Finds an export by its exact, case-sensitive name and resolves any forwarders.
         /// </summary>
         /// <param name="name">The name of the export.</param>
-        /// <returns>The export.</returns>
+        /// <returns>The resolved export, or nullptr if the module does not export the name.</returns>
+        /// <exception cref="core::error">The export table is invalid or a forwarder cannot be resolved.</exception>
         std::shared_ptr< module_t::export_t > fetch_export( std::string_view name ) const;
 
         /// <summary>
-        /// Attempts to get the export by its name without throwing an exception.
+        /// Finds an export by its PE ordinal and resolves any forwarders. The ordinal includes the
+        /// export directory's base and is not a zero-based index into the function table.
+        /// </summary>
+        /// <param name="ordinal">The PE ordinal of the export.</param>
+        /// <returns>The resolved export, or nullptr if the module does not export the ordinal.</returns>
+        /// <exception cref="core::error">The export table is invalid or a forwarder cannot be resolved.</exception>
+        std::shared_ptr< module_t::export_t > fetch_export( std::uint32_t ordinal ) const;
+
+        /// <summary>
+        /// Attempts to find and resolve an export by its exact, case-sensitive name.
         /// </summary>
         /// <param name="name">The name of the export.</param>
-        /// <returns>The export when it was found, or an error describing why it failed.</returns>
+        /// <returns>The resolved export, or an error if lookup fails.</returns>
         core::result_t< std::shared_ptr< module_t::export_t > > try_fetch_export( std::string_view name ) const noexcept;
+
+        /// <summary>
+        /// Attempts to find and resolve an export by its PE ordinal.
+        /// </summary>
+        /// <param name="ordinal">The PE ordinal of the export.</param>
+        /// <returns>The resolved export, or an error if lookup fails.</returns>
+        core::result_t< std::shared_ptr< module_t::export_t > > try_fetch_export( std::uint32_t ordinal ) const noexcept;
 
         /// <summary>
         /// Gets the list of sections in the module.
@@ -98,10 +119,11 @@ namespace wincpp::modules
         std::vector< std::shared_ptr< rtti::object_t > > fetch_objects( std::string_view mangled ) const;
 
         /// <summary>
-        /// Gets the export by its name.
+        /// Gets an export by its exact, case-sensitive name and resolves any forwarders.
         /// </summary>
         /// <param name="name">The export name.</param>
         /// <returns>The export.</returns>
+        /// <exception cref="core::error">The export is missing, invalid, or cannot be resolved.</exception>
         const export_t& operator[]( std::string_view name ) const;
 
        private:
@@ -120,6 +142,33 @@ namespace wincpp::modules
 
         mutable std::list< std::shared_ptr< module_t::export_t > > _exports;
         mutable std::list< std::shared_ptr< module_t::section_t > > _sections;
+        mutable bool _exports_loaded = false;
+
+        struct export_directory_t
+        {
+            std::uint32_t virtual_address;
+            std::uint32_t size;
+            std::uint32_t ordinal_base;
+            std::uint32_t function_count;
+            std::uint32_t name_count;
+            std::uint32_t functions_rva;
+            std::uint32_t names_rva;
+            std::uint32_t name_ordinals_rva;
+        };
+
+        struct export_target_t
+        {
+            std::shared_ptr< const module_t > module;
+            std::uintptr_t rva;
+        };
+
+        std::optional< export_directory_t > export_directory() const;
+        std::optional< std::uint32_t > find_export_ordinal( std::string_view name ) const;
+        std::string read_export_string( std::uint32_t rva, std::uintptr_t end_rva ) const;
+        std::optional< export_target_t > resolve_export_target(
+            std::uint32_t ordinal,
+            std::vector< std::pair< std::uintptr_t, std::uint32_t > >& forwarder_chain ) const;
+        std::shared_ptr< export_t > resolve_export( std::uint32_t ordinal, std::string_view name ) const;
     };
 }  // namespace wincpp::modules
 

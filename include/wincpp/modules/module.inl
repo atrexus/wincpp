@@ -1,7 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <charconv>
 #include <exception>
+#include <limits>
 #include <ranges>
 
 #include "wincpp/core/error.hpp"
@@ -66,72 +68,232 @@ namespace wincpp::modules
         return entry.path;
     }
 
-    inline const std::list< std::shared_ptr< module_t::export_t > >& module_t::exports() const
+    inline std::optional< module_t::export_directory_t > module_t::export_directory() const
     {
-        if ( !_exports.empty() )
-            return _exports;
-
         const auto* nt_headers = detail::nt_headers( header_buffer, nt_headers_offset );
-        const auto directory_header = nt_headers->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_EXPORT ];
+        if ( nt_headers->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_EXPORT )
+            return std::nullopt;
 
-        if ( !directory_header.VirtualAddress || !directory_header.Size )
-            return _exports;
+        const auto data_directory = nt_headers->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_EXPORT ];
 
-        const auto expbuffer = read( directory_header.VirtualAddress, directory_header.Size );
-        const auto rva_to_offset = [ directory_header ]( const std::uintptr_t rva )
-        { return static_cast< std::uintptr_t >( rva - directory_header.VirtualAddress ); };
+        if ( !data_directory.VirtualAddress || !data_directory.Size )
+            return std::nullopt;
 
-        const auto* export_directory =
-            reinterpret_cast< const IMAGE_EXPORT_DIRECTORY* >( expbuffer.get() + rva_to_offset( directory_header.VirtualAddress ) );
-        const auto* names = reinterpret_cast< const std::uint32_t* >( expbuffer.get() + rva_to_offset( export_directory->AddressOfNames ) );
-        const auto* ordinals = reinterpret_cast< const std::uint16_t* >( expbuffer.get() + rva_to_offset( export_directory->AddressOfNameOrdinals ) );
-        const auto* functions = reinterpret_cast< const std::uint32_t* >( expbuffer.get() + rva_to_offset( export_directory->AddressOfFunctions ) );
+        if ( data_directory.Size < sizeof( IMAGE_EXPORT_DIRECTORY ) || data_directory.VirtualAddress >= size() ||
+             data_directory.Size > size() - data_directory.VirtualAddress )
+            throw core::error::from_user( core::user_error_type_t::operation_failed_t, "Invalid export directory in module \"{}\"", name() );
 
-        for ( std::uint32_t index = 0; index < export_directory->NumberOfNames; ++index )
+        const auto directory = read< IMAGE_EXPORT_DIRECTORY >( data_directory.VirtualAddress );
+        const auto table_fits = [ this ]( const std::uint32_t rva, const std::uint32_t count, const std::size_t entry_size )
+        { return count == 0 || ( rva < size() && count <= ( size() - rva ) / entry_size ); };
+
+        if ( ( directory.NumberOfFunctions && directory.NumberOfFunctions - 1 > std::numeric_limits< std::uint32_t >::max() - directory.Base ) ||
+             ( directory.NumberOfNames && !directory.NumberOfFunctions ) ||
+             !table_fits( directory.AddressOfFunctions, directory.NumberOfFunctions, sizeof( std::uint32_t ) ) ||
+             !table_fits( directory.AddressOfNames, directory.NumberOfNames, sizeof( std::uint32_t ) ) ||
+             !table_fits( directory.AddressOfNameOrdinals, directory.NumberOfNames, sizeof( std::uint16_t ) ) )
+            throw core::error::from_user( core::user_error_type_t::operation_failed_t, "Invalid export tables in module \"{}\"", name() );
+
+        return export_directory_t{ .virtual_address = data_directory.VirtualAddress,
+                                   .size = data_directory.Size,
+                                   .ordinal_base = directory.Base,
+                                   .function_count = directory.NumberOfFunctions,
+                                   .name_count = directory.NumberOfNames,
+                                   .functions_rva = directory.AddressOfFunctions,
+                                   .names_rva = directory.AddressOfNames,
+                                   .name_ordinals_rva = directory.AddressOfNameOrdinals };
+    }
+
+    inline std::string module_t::read_export_string( const std::uint32_t rva, const std::uintptr_t end_rva ) const
+    {
+        const auto stop = std::min( end_rva, size() );
+        if ( rva >= stop )
+            throw core::error::from_user(
+                core::user_error_type_t::operation_failed_t, "Export string RVA 0x{:X} is outside module \"{}\"", rva, name() );
+
+        constexpr std::size_t chunk_size = 256;
+        std::string result;
+        auto offset = static_cast< std::uintptr_t >( rva );
+        while ( offset < stop )
         {
-            const auto ordinal = ordinals[ index ];
-            const auto address = functions[ ordinal ];
-            const auto* name = reinterpret_cast< const char* >( expbuffer.get() + rva_to_offset( names[ index ] ) );
+            const auto length = std::min( chunk_size, stop - offset );
+            const auto buffer = read( offset, length );
+            if ( !buffer )
+                throw core::error::from_win32( GetLastError() );
 
-            if ( address >= directory_header.VirtualAddress && address < directory_header.VirtualAddress + directory_header.Size )
-            {
-                const std::string forward = reinterpret_cast< const char* >( expbuffer.get() + rva_to_offset( address ) );
-                const auto dot = forward.find( '.' );
+            const auto* begin = reinterpret_cast< const char* >( buffer.get() );
+            const auto* end = std::find( begin, begin + length, '\0' );
+            result.append( begin, end );
+            if ( end != begin + length )
+                return result;
 
-                if ( dot == std::string::npos )
-                    continue;
-
-                const auto module_name = forward.substr( 0, dot );
-                const auto export_name = forward.substr( dot + 1 );
-                const auto module = factory->p->module_factory.fetch_module( module_name );
-
-                if ( !module )
-                    continue;
-
-                const auto exp = module->fetch_export( export_name );
-
-                if ( !exp )
-                    continue;
-
-                _exports.emplace_back( new export_t{ exp->module(), name, exp->rva, exp->ordinal() } );
-                continue;
-            }
-
-            _exports.emplace_back( new export_t( shared_from_this(), name, address, ordinal ) );
+            offset += length;
         }
 
+        throw core::error::from_user( core::user_error_type_t::operation_failed_t, "Unterminated export string in module \"{}\"", name() );
+    }
+
+    inline std::optional< std::uint32_t > module_t::find_export_ordinal( const std::string_view name ) const
+    {
+        const auto directory = export_directory();
+        if ( !directory || !directory->name_count )
+            return std::nullopt;
+
+        std::uint32_t lower = 0;
+        std::uint32_t upper = directory->name_count;
+        while ( lower < upper )
+        {
+            const auto index = lower + ( upper - lower ) / 2;
+            const auto candidate_rva = read< std::uint32_t >( directory->names_rva + sizeof( std::uint32_t ) * index );
+            const auto candidate = read_export_string( candidate_rva, size() );
+            if ( candidate == name )
+            {
+                const auto function_index = read< std::uint16_t >( directory->name_ordinals_rva + sizeof( std::uint16_t ) * index );
+                if ( function_index >= directory->function_count )
+                    throw core::error::from_user(
+                        core::user_error_type_t::operation_failed_t, "Invalid export name ordinal in module \"{}\"", this->name() );
+
+                return directory->ordinal_base + function_index;
+            }
+
+            if ( candidate < name )
+                lower = index + 1;
+            else
+                upper = index;
+        }
+
+        return std::nullopt;
+    }
+
+    inline std::optional< module_t::export_target_t > module_t::resolve_export_target(
+        const std::uint32_t ordinal,
+        std::vector< std::pair< std::uintptr_t, std::uint32_t > >& forwarder_chain ) const
+    {
+        const auto directory = export_directory();
+        if ( !directory || !directory->function_count || ordinal < directory->ordinal_base ||
+             ordinal - directory->ordinal_base >= directory->function_count )
+            return std::nullopt;
+
+        const auto function_index = ordinal - directory->ordinal_base;
+        const auto function_rva = read< std::uint32_t >( directory->functions_rva + sizeof( std::uint32_t ) * function_index );
+        if ( !function_rva )
+            return std::nullopt;
+
+        const auto export_end = static_cast< std::uintptr_t >( directory->virtual_address ) + directory->size;
+
+        if ( function_rva < directory->virtual_address || function_rva >= export_end )
+        {
+            if ( function_rva >= size() )
+                throw core::error::from_user(
+                    core::user_error_type_t::operation_failed_t, "Export RVA 0x{:X} is outside module \"{}\"", function_rva, this->name() );
+            return export_target_t{ .module = shared_from_this(), .rva = function_rva };
+        }
+
+        const auto key = std::pair{ address(), ordinal };
+        if ( std::ranges::find( forwarder_chain, key ) != forwarder_chain.end() )
+            throw core::error::from_user(
+                core::user_error_type_t::operation_failed_t, "Circular export forwarder for ordinal {} in module \"{}\"", ordinal, this->name() );
+        forwarder_chain.push_back( key );
+
+        const auto forwarder = read_export_string( function_rva, export_end );
+        const auto separator = forwarder.find_last_of( '.' );
+        if ( separator == std::string::npos || separator == 0 || separator + 1 == forwarder.size() )
+            throw core::error::from_user(
+                core::user_error_type_t::operation_failed_t, "Malformed export forwarder \"{}\" in module \"{}\"", forwarder, this->name() );
+
+        const auto target_module = factory->p->module_factory.fetch_module( std::string_view( forwarder ).substr( 0, separator ), this->name() );
+        if ( !target_module )
+            throw core::error::from_user(
+                core::user_error_type_t::module_not_found_t, "Failed to resolve forwarder \"{}\" from module \"{}\"", forwarder, this->name() );
+
+        const auto target_symbol = std::string_view( forwarder ).substr( separator + 1 );
+        std::optional< export_target_t > resolved_target;
+        if ( target_symbol.starts_with( '#' ) )
+        {
+            std::uint32_t target_ordinal{};
+            const auto [ pointer, error ] = std::from_chars( target_symbol.data() + 1, target_symbol.data() + target_symbol.size(), target_ordinal );
+            if ( error != std::errc{} || pointer != target_symbol.data() + target_symbol.size() )
+                throw core::error::from_user( core::user_error_type_t::operation_failed_t, "Malformed ordinal forwarder \"{}\"", forwarder );
+
+            resolved_target = target_module->resolve_export_target( target_ordinal, forwarder_chain );
+        }
+        else
+        {
+            if ( const auto target_ordinal = target_module->find_export_ordinal( target_symbol ) )
+                resolved_target = target_module->resolve_export_target( *target_ordinal, forwarder_chain );
+        }
+
+        if ( !resolved_target )
+            throw core::error::from_user(
+                core::user_error_type_t::export_not_found_t, "Failed to resolve forwarder \"{}\" from module \"{}\"", forwarder, this->name() );
+
+        return resolved_target;
+    }
+
+    inline std::shared_ptr< module_t::export_t > module_t::resolve_export( const std::uint32_t ordinal, const std::string_view name ) const
+    {
+        std::vector< std::pair< std::uintptr_t, std::uint32_t > > forwarder_chain;
+        const auto target = resolve_export_target( ordinal, forwarder_chain );
+        if ( !target )
+            return nullptr;
+
+        return std::shared_ptr< export_t >( new export_t( target->module, name, target->rva, ordinal ) );
+    }
+
+    inline const std::list< std::shared_ptr< module_t::export_t > >& module_t::exports() const
+    {
+        if ( _exports_loaded )
+            return _exports;
+
+        const auto directory = export_directory();
+        if ( !directory || !directory->function_count )
+        {
+            _exports_loaded = true;
+            return _exports;
+        }
+
+        std::list< std::shared_ptr< export_t > > parsed_exports;
+        std::vector< bool > named_functions( directory->function_count );
+
+        for ( std::uint32_t index = 0; index < directory->name_count; ++index )
+        {
+            const auto function_index = read< std::uint16_t >( directory->name_ordinals_rva + sizeof( std::uint16_t ) * index );
+            if ( function_index >= directory->function_count )
+                throw core::error::from_user( core::user_error_type_t::operation_failed_t, "Invalid export name ordinal in module \"{}\"", name() );
+
+            named_functions[ function_index ] = true;
+            const auto export_name = read_export_string( read< std::uint32_t >( directory->names_rva + sizeof( std::uint32_t ) * index ), size() );
+            if ( const auto exp = resolve_export( directory->ordinal_base + function_index, export_name ) )
+                parsed_exports.emplace_back( exp );
+        }
+
+        for ( std::uint32_t index = 0; index < directory->function_count; ++index )
+        {
+            if ( named_functions[ index ] )
+                continue;
+
+            const auto ordinal = directory->ordinal_base + index;
+            if ( const auto exp = resolve_export( ordinal, {} ) )
+                parsed_exports.emplace_back( exp );
+        }
+
+        _exports = std::move( parsed_exports );
+        _exports_loaded = true;
         return _exports;
     }
 
     inline std::shared_ptr< module_t::export_t > module_t::fetch_export( const std::string_view name ) const
     {
-        for ( const auto& exp : exports() )
-        {
-            if ( exp->name() == name )
-                return exp;
-        }
+        const auto ordinal = find_export_ordinal( name );
+        if ( !ordinal )
+            return nullptr;
 
-        return nullptr;
+        return resolve_export( *ordinal, name );
+    }
+
+    inline std::shared_ptr< module_t::export_t > module_t::fetch_export( const std::uint32_t ordinal ) const
+    {
+        return resolve_export( ordinal, {} );
     }
 
     inline core::result_t< std::shared_ptr< module_t::export_t > > module_t::try_fetch_export( const std::string_view name ) const noexcept
@@ -143,6 +305,30 @@ namespace wincpp::modules
 
             return core::unexpected_t{ core::error::from_user(
                 core::user_error_type_t::export_not_found_t, "Failed to find export \"{}\" in module \"{}\"", name, this->name() ) };
+        }
+        catch ( const core::error& error )
+        {
+            return core::unexpected_t{ error };
+        }
+        catch ( const std::exception& exception )
+        {
+            return core::unexpected_t{ core::error::from_user( core::user_error_type_t::operation_failed_t, "{}", exception.what() ) };
+        }
+        catch ( ... )
+        {
+            return core::unexpected_t{ core::error::from_user( core::user_error_type_t::operation_failed_t, "Unknown failure" ) };
+        }
+    }
+
+    inline core::result_t< std::shared_ptr< module_t::export_t > > module_t::try_fetch_export( const std::uint32_t ordinal ) const noexcept
+    {
+        try
+        {
+            if ( auto result = fetch_export( ordinal ) )
+                return result;
+
+            return core::unexpected_t{ core::error::from_user(
+                core::user_error_type_t::export_not_found_t, "Failed to find export ordinal {} in module \"{}\"", ordinal, this->name() ) };
         }
         catch ( const core::error& error )
         {

@@ -27,6 +27,7 @@ namespace wincpp
     class module_factory final
     {
         friend struct process_t;
+        friend struct modules::module_t;
 
         process_t* p;
         mutable std::vector< std::shared_ptr< modules::module_t > > module_list;
@@ -37,6 +38,8 @@ namespace wincpp
         /// </summary>
         /// <param name="process">The process object.</param>
         explicit module_factory( process_t* p ) noexcept;
+
+        std::shared_ptr< modules::module_t > fetch_module( std::string_view name, std::string_view importing_module ) const;
 
        public:
         /// <summary>
@@ -64,24 +67,26 @@ namespace wincpp
         const modules::module_t& main_module() const;
 
         /// <summary>
-        /// Gets a module by its name.
+        /// Finds a loaded module by base name. Matching ignores ASCII case, the .dll extension
+        /// is optional, and API-set contract names resolve to their loaded host module.
         /// </summary>
-        /// <param name="name">The name of the module.</param>
-        /// <returns>The module.</returns>
+        /// <param name="name">The module name, path, or API-set contract name.</param>
+        /// <returns>The loaded module, or nullptr if no matching module is found.</returns>
         std::shared_ptr< modules::module_t > fetch_module( std::string_view name ) const;
 
         /// <summary>
-        /// Attempts to get a module by its name without throwing an exception.
+        /// Attempts to find a loaded module using the same name matching rules as fetch_module.
         /// </summary>
-        /// <param name="name">The name of the module.</param>
-        /// <returns>The module when it was found, or an error describing why it failed.</returns>
+        /// <param name="name">The module name, path, or API-set contract name.</param>
+        /// <returns>The loaded module, or an error if lookup fails.</returns>
         core::result_t< std::shared_ptr< modules::module_t > > try_fetch_module( std::string_view name ) const noexcept;
 
         /// <summary>
-        /// Gets a module by its name.
+        /// Gets a loaded module using the same name matching rules as fetch_module.
         /// </summary>
-        /// <param name="name">The name of the module.</param>
+        /// <param name="name">The module name, path, or API-set contract name.</param>
         /// <returns>The module.</returns>
+        /// <exception cref="core::error">No matching module can be found.</exception>
         const modules::module_t& operator[]( std::string_view name ) const;
     };
 }  // namespace wincpp

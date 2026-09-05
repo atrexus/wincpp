@@ -1,0 +1,6 @@
+#pragma comment( linker, "/export:ForwardedByName=wincpp_export_target.NamedExport,@1" )
+#pragma comment( linker, "/export:ForwardedByOrdinal=wincpp_export_target.#9,@2" )
+#pragma comment( linker, "/export:MissingModuleForwarder=wincpp_export_missing.MissingExport,@3" )
+#pragma comment( linker, "/export:ApiSetForwarder=api-ms-win-core-synch-l1-2-1.CreateSemaphoreW,@4" )
+#pragma comment( linker, "/export:MissingExportForwarder=wincpp_export_target.MissingExport,@5" )
+#pragma comment( linker, "/export:CircularForwarder=wincpp_export_forwarders.CircularForwarder,@6" )
